@@ -8,3 +8,5 @@ source(paste0(funcroot, "/INLA DIC Plot.R"))
 source(paste0(funcroot, "/INLA Range Plot.R"))
 
 library(devtools)
+
+library(ggregplot)
