@@ -51,9 +51,3 @@ NetworkCalc <- function(Data, ID, Easting, Northing, Distance, Time, TimeLimit, 
   return(AssMatrix)
 
 }
-
-nodes <- colnames(N1)
-links <- reshape2::melt(N1)
-links <- links[links[,3]>0,]
-
-net = graph.data.frame(links, nodes, directed = F)
