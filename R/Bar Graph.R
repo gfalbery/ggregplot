@@ -2,12 +2,6 @@
 
 require(ggplot2)
 
-THEME <- theme(axis.text.x = element_text(size = 12, colour = "black"),
-               axis.text.y = element_text(size = 12, colour = "black")) +
-  theme(axis.title.x = element_text(vjust = -0.35),
-        axis.title.y = element_text(vjust=1.2)) +
-  theme_bw()
-
 Prev<-function(y){ round((length(y[y>0])/length(y))*100)}
 
 data_summary<-function(data, varname, groupnames){

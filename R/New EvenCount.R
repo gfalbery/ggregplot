@@ -1,3 +1,5 @@
+Evencount <- function(df){
+
 df$Count<-0
 j<-1
 df$Gradient<-df$Samples/df$Day
@@ -15,3 +17,5 @@ df[length(df$Day),"Count"]<-df[length(df$Day),"Samples"]
 
 require(ggplot2)
 ggplot(df,aes(Day,Count))+geom_line()
+
+}
