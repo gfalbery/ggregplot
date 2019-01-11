@@ -2,7 +2,7 @@
 
 require(ggplot2)
 
-Prev<-function(y){ round((length(y[y>0])/length(y))*100)}
+Prev <- function(y){ round((length(y[y>0])/length(y))*100)}
 
 data_summary<-function(data, varname, groupnames){
   require(plyr)
@@ -30,7 +30,8 @@ BarGraph<-function(df,x,y,z=x,geom="Bar",text=FALSE,labels=NA){
 
   df2$Text<-df2[,text]
 
-  PositionT<-(range(c(df2[,y]-df2$se,df2[,y]+df2$se),na.rm=T)[2]-range(c(df2[,y]-df2$se,df2[,y]+df2$se),na.rm=T)[1])/15
+  #PositionT<-(range(c(df2[,y]-df2$se,df2[,y]+df2$se),na.rm=T)[2]-range(c(df2[,y]-df2$se,df2[,y]+df2$se),na.rm=T)[1])/15
+  PositionT <- (max(df2[,y]+df2$se,na.rm=T))/15
 
   if(geom=="Bar"){
     if(text%in%c("Prevalence","N")){
