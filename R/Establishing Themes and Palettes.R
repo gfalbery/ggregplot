@@ -10,11 +10,12 @@ AlberColours <- sapply(AlberPalettes, function(a) RColorBrewer::brewer.pal(5, a)
 AlberColours[length(AlberColours)+1:2] <- RColorBrewer::brewer.pal(11, AlberPalettes[[4]])[c(2,10)]
 
 AlberTheme <- theme_bw() +
-  theme(axis.title.x = element_text(vjust = -0.35, 
-                                    size = 12, 
-                                    colour = "black"), 
-        axis.title.y = element_text(vjust = 1.2, 
-                                    size = 12, 
-                                    colour = "black"))
+  theme(axis.title.x = element_text(vjust = -0.35,
+                                    size = 12,
+                                    colour = "black"),
+        axis.title.y = element_text(vjust = 1.2,
+                                    size = 12,
+                                    colour = "black"),
+        strip.background = element_rect(fill = "white", colour = "dark grey"))
 
 theme_set(AlberTheme)
