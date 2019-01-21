@@ -3,6 +3,7 @@ require(grid)
 vp.layout <- function(x, y) viewport(layout.pos.row=x, layout.pos.col=y)
 
 arrange_ggplot2 <- function(dots, nrow=NULL, ncol=NULL, as.table=FALSE) {
+  require(grid)
   n <- length(dots)
   if(is.null(nrow) & is.null(ncol)) { nrow = floor(n/2) ; ncol = ceiling(n/nrow)}
   if(is.null(nrow)) { nrow = ceiling(n/ncol)}
@@ -12,7 +13,7 @@ arrange_ggplot2 <- function(dots, nrow=NULL, ncol=NULL, as.table=FALSE) {
   pushViewport(viewport(layout=grid.layout(nrow,ncol) ) )
   ii.p <- 1
   for(ii.row in seq(1, nrow)){
-    ii.table.row <- ii.row       
+    ii.table.row <- ii.row
     if(as.table) {ii.table.row <- nrow - ii.table.row + 1}
     for(ii.col in seq(1, ncol)){
       ii.table <- ii.p
