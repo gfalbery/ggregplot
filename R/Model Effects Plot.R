@@ -2,7 +2,7 @@
 library(ggplot2)
 THEME<-theme(axis.text.x=element_text(size=12,colour="black"),axis.text.y=element_text(size=12,colour="black"))+theme(axis.title.x=element_text(vjust=-0.35),axis.title.y=element_text(vjust=1.2))+theme_bw()
 
-Efxplot<-function(modellist, sig = TRUE, ModelNames = NULL){
+Efxplot<-function(modellist, sig = TRUE, ModelNames = NULL, tips = 0.2){
   require(dplyr); require(ggplot2); require(INLA); require(asreml); require(MCMCglmm)
   graphlist<-list()
   for(i in 1:length(modellist)){
@@ -52,12 +52,12 @@ Efxplot<-function(modellist, sig = TRUE, ModelNames = NULL){
   if(!is.null(ModelNames)){
     levels(graph$Model)<-ModelNames
   }
-  
+
   position <- ifelse(length(unique(graph$Model)) == 1, "none", "right")
 
   ggplot(as.data.frame(graph),aes(x=Factor,y=Estimate,colour=Model))+
     geom_point(position=position_dodge(w=0.5))+
-    geom_errorbar(position=position_dodge(w=0.5), aes(ymin = Lower, ymax = Upper),size=0.3,width=0.2)+
+    geom_errorbar(position=position_dodge(w=0.5), aes(ymin = Lower, ymax = Upper),size=0.3,width=tips)+
     geom_hline(aes(yintercept=0),lty=2) + THEME + labs(x=NULL) + coord_flip() +
     theme(legend.position = position) +
     geom_text(aes(label = Sig, y = starloc), position = position_dodge(w = 0.5))
