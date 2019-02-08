@@ -8,7 +8,7 @@ ThemeChange <- function(){
 
     DefaultTheme <- theme_get()
 
-    source("R/Establishing Themes and Palettes.R")
+    source("D:/Scripy/ggregplot/R/Establishing Themes and Palettes.R")
 
   }
 
@@ -16,4 +16,4 @@ ThemeChange <- function(){
 
 }
 
-ThemeRevert <- function(){theme_set(DefaultTheme)}
+ThemeRevert <- function() theme_set(DefaultTheme)

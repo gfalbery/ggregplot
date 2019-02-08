@@ -1,20 +1,41 @@
-# INLA Repeatability
 
+# INLA ICC function ####
 
-Invsqrt <- function(x) {1 / sqrt(x)}
+library(tidyverse)
 
+INLARep <- function(Model, Family = "gaussian"){
 
-INLARep<-function(model, distribution, variable){
-  
-  pmtau <- model$marginals.hyperpar$`Precision for the Gaussian observations`
-  sigma <- inla.emarginal(Invsqrt, pmtau)
-  
-  pmtau.Fish <- model$marginals.hyperpar[[paste0("Precision for ",variable)]]
-  sigmaFish <- inla.emarginal(Invsqrt, pmtau.Fish)
-  c(sigmaFish, sigma)
-  
-  # From these we can calculate the ICC:
+  MySqrt <- function(x) {1 / sqrt(x)}
 
-  return(sigmaFish^2 / (sigmaFish^2 + sigma^2))
-  
+  SigmaList <- list()
+
+  Parameters <- which(names(Model$marginals.hyperpar) %>%substr(1,9)%in%c("Precision","precision"))
+  HyperPars <- Model$marginals.hyperpar[Parameters]
+
+  for(x in 1:(length(HyperPars))){
+    tau <- HyperPars[[x]]
+    sigma <- inla.emarginal(MySqrt, tau)
+    sigma <- inla.emarginal(function(x) 1/x, tau)
+    SigmaList[[x]] <- sigma
+  }
+
+  names(SigmaList) <- names(HyperPars)
+
+  lapply(SigmaList, function(a) a^2/sum(sapply(SigmaList, function(b) b^2)))
+
+}
+
+INLARepPlot <- function(ModelList){
+
+  OutputList <- sapply(ModelList, INLARep) %>% bind_rows %>% data.frame
+  OutputList$Model <- as.numeric(rownames(OutputList))
+
+  OutputLong <- OutputList %>% gather(Var, Variance, -"Model") %>%
+    mutate(Var = factor(substr(as.character(Var), 15, nchar(as.character(Var))),
+                        levels = unique(substr(as.character(Var), 15, nchar(as.character(Var))))))
+
+  ggplot(OutputLong, aes(factor(Model), Variance, fill = Var)) +
+    geom_col(position = "stack") +
+    labs(x = "Model")
+
 }
