@@ -32,7 +32,7 @@ BarGraph <- function(df, x, y, z = x,
 
   df2$Text<-df2[,text]
 
-  if(order = T){df2 <- df2[order(df2[,y])]; df2[,x] <- factor(df2[,x], levels = unique(df2[,x]))}
+  if(order == T){df2 <- df2[order(df2[,y])]; df2[,x] <- factor(df2[,x], levels = unique(df2[,x]))}
 
   PositionT <- (max(df2[,y]+df2$se,na.rm=T))/15
 
