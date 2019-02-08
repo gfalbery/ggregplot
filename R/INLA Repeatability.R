@@ -25,17 +25,25 @@ INLARep <- function(Model, Family = "gaussian"){
 
 }
 
-INLARepPlot <- function(ModelList){
+INLARepPlot <- function(ModelList, ModelNames = NULL, Just = F){
 
   OutputList <- sapply(ModelList, INLARep) %>% bind_rows %>% data.frame
-  OutputList$Model <- as.numeric(rownames(OutputList))
+  OutputList$Model <- as.numeric(rownames(OutputList)) %>% as.factor
+
+
+  if(!is.null(ModelNames)){
+    levels(OutputList$Model) <- ModelNames
+  }
 
   OutputLong <- OutputList %>% gather(Var, Variance, -"Model") %>%
     mutate(Var = factor(substr(as.character(Var), 15, nchar(as.character(Var))),
                         levels = unique(substr(as.character(Var), 15, nchar(as.character(Var))))))
 
+  if(Just){ Angle = 45; Hjust = 1 }else{ Angle = 0; Hjust = 0.5}
+
   ggplot(OutputLong, aes(factor(Model), Variance, fill = Var)) +
     geom_col(position = "stack") +
-    labs(x = "Model")
+    labs(x = "Model") +
+    theme(axis.text.x = element_text(angle = Angle, hjust = Hjust))
 
 }

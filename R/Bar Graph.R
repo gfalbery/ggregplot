@@ -19,7 +19,9 @@ data_summary<-function(data, varname, groupnames){
   return(data_sum)
 }
 
-BarGraph<-function(df,x,y,z=x,geom="Bar",text=FALSE,labels=NA){
+BarGraph <- function(df, x, y, z = x,
+                     geom = "Bar", text = FALSE, labels = NA, order = F){
+
   require(ggplot2);require(reshape2)
   df2<-data_summary(droplevels(na.omit(df[,c(x,y,z)])),varname=y,groupnames=unique(c(x,z)))
   if(!z==x){
@@ -30,7 +32,8 @@ BarGraph<-function(df,x,y,z=x,geom="Bar",text=FALSE,labels=NA){
 
   df2$Text<-df2[,text]
 
-  #PositionT<-(range(c(df2[,y]-df2$se,df2[,y]+df2$se),na.rm=T)[2]-range(c(df2[,y]-df2$se,df2[,y]+df2$se),na.rm=T)[1])/15
+  if(order = T){df2 <- df2[order(df2[,y])]; df2[,x] <- factor(df2[,x], levels = unique(df2[,x]))}
+
   PositionT <- (max(df2[,y]+df2$se,na.rm=T))/15
 
   if(geom=="Bar"){
