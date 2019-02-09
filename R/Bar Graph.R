@@ -14,13 +14,13 @@ data_summary<-function(data, varname, groupnames){
   }
 
   data_sum<-plyr::ddply(data, groupnames, .fun=summary_func,
-                  varname)
+                        varname)
   data_sum <- plyr::rename(data_sum, c("mean" = varname))
   return(data_sum)
 }
 
 BarGraph <- function(df, x, y, z = x,
-                     geom = "Bar", text = FALSE, labels = NA, order = F){
+                     geom = "Bar", text = FALSE, labels = NA, order = F, Just = T){
 
   require(ggplot2);require(reshape2)
   df2<-data_summary(droplevels(na.omit(df[,c(x,y,z)])),varname=y,groupnames=unique(c(x,z)))
@@ -32,9 +32,16 @@ BarGraph <- function(df, x, y, z = x,
 
   df2$Text<-df2[,text]
 
-  if(order == T){df2 <- df2[order(df2[,y])]; df2[,x] <- factor(df2[,x], levels = unique(df2[,x]))}
+  if(order == T){
+
+    df2 <- df2[order(df2[,y]),]
+    df2[,x] <- factor(df2[,x], levels = unique(df2[,x]))
+
+  }
 
   PositionT <- (max(df2[,y]+df2$se,na.rm=T))/15
+
+  if(Just){ Angle = 45; Hjust = 1 }else{ Angle = 0; Hjust = 0.5}
 
   if(geom=="Bar"){
     if(text%in%c("Prevalence","N")){
@@ -43,19 +50,23 @@ BarGraph <- function(df, x, y, z = x,
         geom_errorbar(aes(ymin=df2[,y]-se,ymax=df2[,y]+se),width=0.2,position=position_dodge(.9))+
         THEME+xlab(x)+ylab(y)+labs(fill=z)+
         geom_text(aes(y=ifelse(df2[,y]+se>0,df2[,y]+se+PositionT,PositionT),label=Text),position=position_dodge(.9))+
-        geom_text(aes(label=labels,y=ifelse(df2[,y]+se>0,df2[,y]+se+PositionT*1.5,PositionT*1.5)),position=position_dodge(.9))
+        geom_text(aes(label=labels,y=ifelse(df2[,y]+se>0,df2[,y]+se+PositionT*1.5,PositionT*1.5)),position=position_dodge(.9)) +
+        theme(axis.text.x = element_text(angle = Angle, hjust = Hjust))
+
     }else{
       ggplot(df2,aes(df2[,x],df2[,y],fill=as.factor(df2[,z])))+
         geom_bar(stat="identity",colour="black",position=position_dodge(.9))+
         geom_errorbar(aes(ymin=df2[,y]-se,ymax=df2[,y]+se),width=0.2,position=position_dodge(.9))+
         THEME+xlab(x)+ylab(y)+labs(fill=z)+
-        geom_text(aes(label=labels,y=ifelse(df2[,y]+se>0,df2[,y]+se+PositionT,PositionT)),position=position_dodge(.9))
+        geom_text(aes(label=labels,y=ifelse(df2[,y]+se>0,df2[,y]+se+PositionT,PositionT)),position=position_dodge(.9)) +
+        theme(axis.text.x = element_text(angle = Angle, hjust = Hjust))
     }
   }else{
     ggplot(df2,aes(df2[,x],df2[,y],colour=as.factor(df2[,z])))+
       geom_point(position=position_dodge(.9),size=5)+
       geom_errorbar(aes(ymin=df2[,y]-se,ymax=df2[,y]+se),width=0.2,position=position_dodge(.9))+
       THEME+xlab(x)+ylab(y)+labs(fill=z)+
-      geom_text(aes(label=labels,y=ifelse(df2[,y]+se>0,df2[,y]+se+PositionT*1.5,PositionT*1.5)),position=position_dodge(.9))
+      geom_text(aes(label=labels,y=ifelse(df2[,y]+se>0,df2[,y]+se+PositionT*1.5,PositionT*1.5)),position=position_dodge(.9)) +
+      theme(axis.text.x = element_text(angle = Angle, hjust = Hjust))
   }
 }
