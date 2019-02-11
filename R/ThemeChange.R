@@ -4,7 +4,7 @@ ThemeChange <- function(){
 
   CurrentTheme <- theme_get()
 
-  if(!all(unlist(CurrentTheme) == unlist(AlberTheme), na.rm = T)){
+  if(!identical(CurrentTheme, AlberTheme)){
 
     DefaultTheme <- theme_get()
 

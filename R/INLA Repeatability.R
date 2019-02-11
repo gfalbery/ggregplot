@@ -19,31 +19,42 @@ INLARep <- function(Model, Family = "gaussian"){
     SigmaList[[x]] <- sigma
   }
 
-  names(SigmaList) <- names(HyperPars)
+  NameList <- sapply(names(HyperPars), function(a) last(strsplit(a, " ")[[1]]))
 
-  lapply(SigmaList, function(a) a^2/sum(sapply(SigmaList, function(b) b^2)))
+  substr(NameList, 1, 1) <- toupper(substr(NameList, 1, 1))
 
+  if(any(NameList=="Observations")) NameList[NameList=="Observations"] <- "Residual"
+
+  names(SigmaList) <- NameList
+
+  if(Family == "binomial"){
+    lapply(SigmaList, function(a) (a^2)/c(sum(sapply(SigmaList, function(b) b^2))+pi^(2/3))) %>% return
+  } else{
+
+    if(Family == "gaussian") lapply(SigmaList, function(a) a^2/(sum(sapply(SigmaList, function(b) b^2)))) %>% return
+  }
 }
 
-INLARepPlot <- function(ModelList, ModelNames = NULL, Just = F){
+INLARepPlot <- function(ModelList, ModelNames = NULL, Just = F, DICOrder = F, Family = "gaussian"){
 
-  OutputList <- sapply(ModelList, INLARep) %>% bind_rows %>% data.frame
+  OutputList <- sapply(ModelList, function(a) INLARep(a, Family = Family)) %>% bind_rows %>% data.frame
   OutputList$Model <- as.numeric(rownames(OutputList)) %>% as.factor
-
 
   if(!is.null(ModelNames)){
     levels(OutputList$Model) <- ModelNames
   }
 
+  if(DICOrder) OutputList <- OutputList[rev(order(sapply(ModelList, MDIC))),]; OutputList$Model <- factor(OutputList$Model, levels = unique(OutputList$Model))
+
   OutputLong <- OutputList %>% gather(Var, Variance, -"Model") %>%
-    mutate(Var = factor(substr(as.character(Var), 15, nchar(as.character(Var))),
-                        levels = unique(substr(as.character(Var), 15, nchar(as.character(Var))))))
+    mutate(Var = factor(Var, levels = unique(Var)))
 
   if(Just){ Angle = 45; Hjust = 1 }else{ Angle = 0; Hjust = 0.5}
 
   ggplot(OutputLong, aes(factor(Model), Variance, fill = Var)) +
     geom_col(position = "stack") +
     labs(x = "Model") +
-    theme(axis.text.x = element_text(angle = Angle, hjust = Hjust))
+    theme(axis.text.x = element_text(angle = Angle, hjust = Hjust)) +
+    lims(y = c(0,1))
 
 }
