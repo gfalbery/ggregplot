@@ -22,15 +22,23 @@ data_summary<-function(data, varname, groupnames){
 BarGraph <- function(df, x, y, z = x,
                      geom = "Bar", text = FALSE, labels = NA, order = F, Just = T){
 
-  require(ggplot2);require(reshape2)
+  require(ggplot2);require(reshape2); require(tidyverse)
+
   df2<-data_summary(droplevels(na.omit(df[,c(x,y,z)])),varname=y,groupnames=unique(c(x,z)))
+
+  df %>% group_by(x, z) %>%
+    summarise(y = mean(y),
+              N = n(),
+              SD = sd(y)) %>%
+    mutate(SE = SD/(N^0.5))
+
   if(!z==x){
     df2$Prevalence<-na.omit(melt(tapply(df[,y],list(df[,z],df[,x]),Prev)))$value
   }else{
     df2$Prevalence<-na.omit(melt(tapply(df[,y],df[,x],Prev)))$value
   }
 
-  df2$Text<-df2[,text]
+  df2$Text <- df2[,text]
 
   if(order == T){
 
