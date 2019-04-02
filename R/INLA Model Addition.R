@@ -19,8 +19,8 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL, RandomModel 
   ModelList <- AllModelList <- RemovedList <- FullFormulaList <- FormulaList <- list()
   DICList <- dDICList <- list()
 
-  DICList[[1]] <- BaseModel$dic$dic
-  FullFormulaList[[1]] <- f1
+  DICList[["Base"]] <- BaseModel$dic$dic
+  FullFormulaList[["Base"]] <- f1
 
 
   for(x in 1:length(Add)){
@@ -39,9 +39,9 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL, RandomModel 
                    data = Data,
                    control.compute = list(dic = TRUE))
 
-    ModelList[[x]] <- Model1
+    ModelList[[Add[x]]] <- Model1
 
-    FormulaList[[x]] <- f2
+    FormulaList[[Add[x]]] <- f2
 
   }
 
@@ -87,9 +87,9 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL, RandomModel 
                        data = Data,
                        control.compute = list(dic = TRUE))
 
-        ModelList[[x]] <- Model1
+        ModelList[[Add2[x]]] <- Model1
 
-        FormulaList[[x]] <- f2
+        FormulaList[[Add2[x]]] <- f2
 
         #print(paste("Adding", Add2[x]))
 
