@@ -3,7 +3,7 @@ SinaGraph <- function(df, x, y, z = x,
                      Order = F,
                      Just = F){
 
-  require(ggplot2); require(dplyr)
+  require(ggplot2); require(dplyr); require(ggforce)
 
   df$X <- df[,x]
   df$Y <- df[,y]
