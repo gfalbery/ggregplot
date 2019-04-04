@@ -11,7 +11,7 @@ THEME<-theme(axis.text.x=element_text(size=12,colour="black"),
   theme_bw()
 
 
-ggField <- function(Model, Mesh, Groups = 1){#, xlim, ylim){
+ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete"){#, xlim, ylim){
 
   require(ggplot2); require(INLA)
 
@@ -27,33 +27,39 @@ ggField <- function(Model, Mesh, Groups = 1){#, xlim, ylim){
   #Full.Projection <- Full.Projection[rep(rownames(Full.Projection),Groups),]
 
   if(Groups ==1){
-  Full.Projection$value <- c(inla.mesh.project(Projection, Model$summary.random$w$mean))
+    Full.Projection$value <- c(inla.mesh.project(Projection, Model$summary.random$w$mean))
   }else{
-  Full.Projection[,paste0("Group",1:Groups)]<-apply(
-    matrix(Model$summary.random$w$mean,ncol=Groups), 2,
-    function(x) c(inla.mesh.project(Projection,x)))
+    Full.Projection[,paste0("Group",1:Groups)]<-apply(
+      matrix(Model$summary.random$w$mean,ncol=Groups), 2,
+      function(x) c(inla.mesh.project(Projection,x)))
 
-  Full.Projection <- reshape2::melt(Full.Projection, id.vars = c(names(Full.Projection)[-which(names(Full.Projection)%in%paste0("Group",1:Groups))]))
+    Full.Projection <- reshape2::melt(Full.Projection, id.vars = c(names(Full.Projection)[-which(names(Full.Projection)%in%paste0("Group",1:Groups))]))
   }
 
-  Full.Projection$Fill <- cut(Full.Projection$value,
-                              breaks = quantile(Full.Projection$value, 0:9/9, na.rm = T),
-                              labels = c(round(quantile(Full.Projection$value, 0:9/9, na.rm = T), 2)[1:9]))
+  if(Fill == "Discrete"){
+
+    Full.Projection$Fill <- cut(Full.Projection$value,
+                                breaks = quantile(Full.Projection$value, 0:9/9, na.rm = T),
+                                labels = c(round(quantile(Full.Projection$value, 0:9/9, na.rm = T), 2)[1:9]),
+                                include.lowest = T)
+  } else{
+    Full.Projection$Fill <- Full.Projection$value
+  }
 
   Full.Projection$Group <- rep(1:Groups, each = Dim1)
 
-
   Full.Projection <- na.omit(Full.Projection)
 
-  return(ggplot(Full.Projection,aes(x, y, fill = Fill))+
-           #lims(x = xlim, y = ylim) +
-           facet_wrap( ~ Group) +
-           geom_tile(colour = "black") +
-           geom_tile(colour = NA) + guides(fill = guide_legend(reverse = T)) +
-           coord_fixed() + labs(fill = "Mean") +
-           THEME + theme(strip.background = element_rect(fill = "white")) +
-           #geom_path(data=rbind(boundary,boundary[1,]),inherit.aes=F,aes(Easting,Northing),size=1,colour="black") +
-           labs(x = "Easting", y = "Northing")
-  )
+  FieldPlot <- ggplot(Full.Projection,aes(x, y, fill = Fill))+
+    geom_tile(colour = "black") +
+    geom_tile(colour = NA) +
+    guides(fill = guide_legend(reverse = T)) +
+    coord_fixed() + labs(fill = "Mean") +
+    THEME +
+    labs(x = "Easting", y = "Northing")
+
+  if(Groups>1) FieldPlot <- FieldPlot + facet_wrap( ~ Group) + theme(strip.background = element_rect(fill = "white"))
+
+  return(FieldPlot)
 
 }
