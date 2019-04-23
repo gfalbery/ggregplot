@@ -1,7 +1,8 @@
 
 BarGraph <- function(df, x, y, z = x,
                      Order = F,
-                     Just = F){
+                     Just = F,
+                     Text = F){
 
   require(ggplot2); require(dplyr); require(ggforce)
 
@@ -10,8 +11,8 @@ BarGraph <- function(df, x, y, z = x,
   df$Colour <- df[,z]
 
   Errordf <- df %>% group_by(X, Colour) %>%
-    summarise(Mean = mean(Y),
-              sd = sd(Y),
+    summarise(Mean = mean(Y, na.rm = T),
+              sd = sd(Y, na.rm = T),
               N = n()) %>%
     mutate(se = sd/(N^0.5)) %>%
     as.data.frame() %>%
@@ -38,6 +39,17 @@ BarGraph <- function(df, x, y, z = x,
 
   if(Order) SPlot <- SPlot + scale_x_discrete(limits = rev(unique(Errordf$X)))
   if(Just) SPlot <- SPlot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+  if(Text == "N"){
+
+    PositionT <- (max(abs(c(Errordf$Mean + Errordf$se,Errordf$Mean - Errordf$se)), na.rm = T))/15
+
+    SPlot <- SPlot + geom_text(data = Errordf, aes(y = ifelse(Mean + se > 0,
+                                                              Mean + se + PositionT,
+                                                              PositionT),label = N),
+                               position=position_dodge(.9))
+
+  }
 
   SPlot
 
