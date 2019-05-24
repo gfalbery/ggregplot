@@ -55,10 +55,11 @@ Efxplot<-function(modellist, sig = TRUE, ModelNames = NULL, tips = 0.2){
 
   position <- ifelse(length(unique(graph$Model)) == 1, "none", "right")
 
-  ggplot(as.data.frame(graph),aes(x=Factor,y=Estimate,colour=Model))+
+  ggplot(as.data.frame(graph),aes(x=as.factor(Factor),y=Estimate,colour=Model))+
     geom_point(position=position_dodge(w=0.5))+
     geom_errorbar(position=position_dodge(w=0.5), aes(ymin = Lower, ymax = Upper),size=0.3,width=tips)+
     geom_hline(aes(yintercept=0),lty=2) + THEME + labs(x=NULL) + coord_flip() +
+    scale_x_discrete(limits = rev(unique(graph$Factor))) +
     theme(legend.position = position) +
     geom_text(aes(label = Sig, y = starloc), position = position_dodge(w = 0.5))
 
