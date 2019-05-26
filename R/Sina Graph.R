@@ -1,7 +1,9 @@
 
 SinaGraph <- function(df, x, y, z = x,
                      Order = F,
-                     Just = F){
+                     Just = F,
+                     Alpha = 1,
+                     Scale = "area"){
 
   require(ggplot2); require(dplyr); require(ggforce)
 
@@ -21,7 +23,9 @@ SinaGraph <- function(df, x, y, z = x,
   SPlot <- df %>%
     ggplot(aes(as.factor(X), Y, colour = as.factor(Colour))) +
     geom_sina(scale = "width",
-              position = position_dodge(0.9)) +
+              position = position_dodge(0.9),
+              alpha = Alpha,
+              scale = Scale) +
     labs(x = x, y = y) +
     geom_point(data = Errordf,
                aes(y = Mean, group = as.factor(Colour)),
