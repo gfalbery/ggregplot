@@ -22,8 +22,7 @@ SinaGraph <- function(df, x, y, z = x,
 
   SPlot <- df %>%
     ggplot(aes(as.factor(X), Y, colour = as.factor(Colour))) +
-    geom_sina(scale = "width",
-              position = position_dodge(0.9),
+    geom_sina(position = position_dodge(0.9),
               alpha = Alpha,
               scale = Scale) +
     labs(x = x, y = y) +
