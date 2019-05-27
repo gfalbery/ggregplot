@@ -2,7 +2,8 @@
 BarGraph <- function(df, x, y, z = x,
                      Order = F,
                      Just = F,
-                     Text = F){
+                     Text = F,
+                     TextSize = F){
 
   require(ggplot2); require(dplyr); require(ggforce)
 
@@ -47,11 +48,22 @@ BarGraph <- function(df, x, y, z = x,
 
     PositionT <- (max(abs(c(Errordf$Mean + Errordf$se,Errordf$Mean - Errordf$se)), na.rm = T))/15
 
-    SPlot <- SPlot + geom_text(data = Errordf, aes(y = ifelse(Mean + se > 0,
-                                                              Mean + se + PositionT,
-                                                              PositionT),label = N),
-                               position=position_dodge(.9))
+    if(!TextSize){
 
+      SPlot <- SPlot + geom_text(data = Errordf, aes(y = ifelse(Mean + se > 0,
+                                                                Mean + se + PositionT,
+                                                                PositionT),label = N),
+                                 position=position_dodge(.9))
+    } else{
+
+      SPlot <- SPlot + geom_text(data = Errordf, aes(y = ifelse(Mean + se > 0,
+                                                                Mean + se + PositionT,
+                                                                PositionT),label = N),
+                                 position=position_dodge(.9),
+                                 size = TextSize)
+
+
+    }
   }
 
   SPlot
