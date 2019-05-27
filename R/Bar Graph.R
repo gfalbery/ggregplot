@@ -6,6 +6,8 @@ BarGraph <- function(df, x, y, z = x,
 
   require(ggplot2); require(dplyr); require(ggforce)
 
+  df <- df[,c(x,y,z)] %>% na.omit()
+
   df$X <- df[,x]
   df$Y <- df[,y]
   df$Colour <- df[,z]
