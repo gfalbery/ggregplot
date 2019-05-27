@@ -10,7 +10,7 @@ BarGraph <- function(df, x, y, z = x,
 
   df$X <- as.factor(df[,x])
   df$Y <- df[,y]
-  df$Colour <- df[,z]
+  df$Colour <- as.factor(df[,z])
 
   Errordf <- df %>% group_by(X, Colour) %>%
     summarise(Mean = mean(Y, na.rm = T),
