@@ -8,7 +8,7 @@ BarGraph <- function(df, x, y, z = x,
 
   df <- df[,c(x,y,z)] %>% na.omit()
 
-  df$X <- df[,x]
+  df$X <- as.factor(df[,x])
   df$Y <- df[,y]
   df$Colour <- df[,z]
 
@@ -20,7 +20,7 @@ BarGraph <- function(df, x, y, z = x,
     as.data.frame() %>%
     slice(order(Mean, decreasing = T)) %>% na.omit()
 
-  if(Order) Errordf <- Errordf %>% slice(order(Mean)) %>% mutate(X = factor(X, levels = unique(X)), Colour = factor(Colour, levels = unique(X)))
+  if(Order) Errordf <- Errordf %>% slice(order(Mean)) %>% mutate(X = factor(X, levels = unique(X)), Colour = factor(Colour, levels = unique(Colour)))
 
   SPlot <- df %>%
     ggplot(aes(X, Y, fill = Colour)) +
