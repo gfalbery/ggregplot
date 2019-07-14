@@ -1,14 +1,18 @@
 
 
-INLAModelSel <- function(Response, Explanatory, Random, RandomModel, Family, Data, Delta = 2){
+INLAModelSel <- function(Response, Explanatory, Random = NULL, RandomModel = NULL, Family, Data, Delta = 2){
 
   require(INLA); require(ggplot2)
 
   Explanatory2 <- paste(Explanatory, collapse = " + ")
 
-  Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
+  if(!is.null(Random)){
+    Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
 
-  f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, " + ", Random2, collapse = " + ")))
+    f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, " + ", Random2, collapse = " + ")))
+  }else{
+    f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, collapse = " + ")))
+  }
 
   FullModel <-   inla(f1,
                       family = Family,
@@ -25,7 +29,14 @@ INLAModelSel <- function(Response, Explanatory, Random, RandomModel, Family, Dat
   for(x in 1:length(Explanatory)){
 
     Explanatory3 <- paste(Explanatory[-x], collapse = " + ")
-    f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+
+    if(!is.null(Random)){
+
+      f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+    } else{
+      f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))
+
+    }
 
     Model1 <- inla(f2,
                    family = Family,
@@ -52,7 +63,7 @@ INLAModelSel <- function(Response, Explanatory, Random, RandomModel, Family, Dat
   NewExplanatory <- Explanatory
 
   while(min(dDICList[[length(dDICList)]]) < Delta&length(NewExplanatory)>0){
-    
+
     print(paste("Losing", names(dDICList[[length(dDICList)]])[which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))]))
     print(Text <- paste("Run", length(DICList)))
 
@@ -65,7 +76,13 @@ INLAModelSel <- function(Response, Explanatory, Random, RandomModel, Family, Dat
 
         Explanatory3 <- paste(NewExplanatory[-x], collapse = " + ")
 
-        f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+        if(!is.null(Random)){
+
+          f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+        } else{
+          f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))
+
+        }
 
         Model1 <- inla(f2,
                        family = Family,
@@ -80,7 +97,13 @@ INLAModelSel <- function(Response, Explanatory, Random, RandomModel, Family, Dat
 
     }else{
 
-      f2 <- as.formula(paste0(Response, " ~ ", paste("1 + ", Random2, collapse = " + ")))
+      if(!is.null(Random)){
+
+        f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+      } else{
+        f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))
+
+      }
 
       Model1 <- inla(f2,
                      family = Family,
