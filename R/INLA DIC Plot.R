@@ -1,4 +1,4 @@
-INLADICFig <- function(ModelList, ModelNames = NULL, Just = F){
+INLADICFig <- function(ModelList, ModelNames = NULL, Just = F, CutOff = 2){
   require(INLA); require(ggplot2)
   df <- data.frame(Model = 1:length(ModelList),
                    DIC = sapply(ModelList, function(m) m$dic$dic))
@@ -7,7 +7,7 @@ INLADICFig <- function(ModelList, ModelNames = NULL, Just = F){
     ModelNames <- 1:length(ModelList)
   }
 
-  df$Competitive <- with(df, ifelse(DIC<min(DIC + 2), "Y", "N"))
+  df$Competitive <- with(df, ifelse(DIC<min(DIC + CutOff), "Y", "N"))
 
   if(Just){ Angle = 45; Hjust = 1 }else{ Angle = 0; Hjust = 0.5}
 
