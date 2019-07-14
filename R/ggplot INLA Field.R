@@ -11,7 +11,7 @@ THEME<-theme(axis.text.x=element_text(size=12,colour="black"),
   theme_bw()
 
 
-ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete"){#, xlim, ylim){
+ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete", Boundary = NULL){#, xlim, ylim){
 
   require(ggplot2); require(INLA)
 
@@ -50,13 +50,23 @@ ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete"){#, xlim, ylim){
 
   Full.Projection <- na.omit(Full.Projection)
 
-  FieldPlot <- ggplot(Full.Projection,aes(x, y, fill = Fill))+
+  FieldPlot <- ggplot(Full.Projection,aes(x, y))
+
+  if(!is.null(Boundary)){
+    FieldPlot <- FieldPlot + geom_polygon(data = Boundary, fill = "white")
+  }
+
+  FieldPlot <- FieldPlot +
     geom_tile(colour = "black") +
-    geom_tile(colour = NA) +
+    geom_tile(colour = NA, aes(fill = Fill)) +
     guides(fill = guide_legend(reverse = T)) +
     coord_fixed() + labs(fill = "Mean") +
     THEME +
     labs(x = "Easting", y = "Northing")
+
+  if(!is.null(Boundary)){
+    FieldPlot <- FieldPlot + geom_polygon(data = Boundary, fill = NA, colour = "black", size = 2)
+  }
 
   if(Groups>1) FieldPlot <- FieldPlot + facet_wrap( ~ Group) + theme(strip.background = element_rect(fill = "white"))
 
