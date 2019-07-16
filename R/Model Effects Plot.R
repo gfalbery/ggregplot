@@ -3,17 +3,10 @@ library(ggplot2)
 THEME<-theme(axis.text.x=element_text(size=12,colour="black"),axis.text.y=element_text(size=12,colour="black"))+theme(axis.title.x=element_text(vjust=-0.35),axis.title.y=element_text(vjust=1.2))+theme_bw()
 
 Efxplot<-function(modellist, sig = TRUE, ModelNames = NULL, tips = 0.2){
-  require(dplyr); require(ggplot2); require(INLA); require(asreml); require(MCMCglmm)
+  require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm)
   graphlist<-list()
   for(i in 1:length(modellist)){
     model<-modellist[[i]]
-
-    if(class(model)=="asreml"){
-      graph<-as.data.frame(summary(model,all=TRUE)$coef.fixed)
-      graph<-subset(graph,solution!=0)
-      colnames(graph)[1]<-"Estimate"
-      graph[,c("Lower","Upper")]<-cbind(graph[,"Estimate"]-graph[,"std error"],graph[,"Estimate"]+graph[,"std error"])
-    }
 
     if(class(model)=="inla"){
       graph<-as.data.frame(summary(model)$fixed)
