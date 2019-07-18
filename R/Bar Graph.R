@@ -25,7 +25,7 @@ BarGraph <- function(df, x, y, z = x,
 
   SPlot <- df %>%
     ggplot(aes(X, Y, fill = Colour)) +
-    labs(x = x, y = y) +
+    labs(x = x, y = y, fill = z) +
     geom_col(data = Errordf,
              aes(y = Mean, group = Colour),
              colour = "black",
