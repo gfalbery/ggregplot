@@ -1,30 +1,16 @@
 # ggplot for INLA fields ####
-require(INLA); require(ggplot2)
 
-xlim <- c(xmin=1350, xmax=1390)
-ylim <- c(ymin=7995, ymax=8050)
+ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
+                    Boundary = NULL, BoundaryWidth = 1){#, xlim, ylim){
 
-THEME<-theme(axis.text.x=element_text(size=12,colour="black"),
-             axis.text.y=element_text(size=12,colour="black"))+
-  theme(axis.title.x=element_text(vjust=-0.35),
-        axis.title.y=element_text(vjust=1.2))+
-  theme_bw()
-
-
-ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete", Boundary = NULL){#, xlim, ylim){
-
-  require(ggplot2); require(INLA)
+  require(ggplot2); require(INLA); require(tidyverse)
 
   Projection <- inla.mesh.projector(Mesh,
-                                    #xlim = xlim,
-                                    #ylim = ylim,
                                     dims = c(300, 300))
 
   Full.Projection <- expand.grid(x = Projection$x, y = Projection$y)
 
   Dim1 <- dim(Full.Projection)[1]
-
-  #Full.Projection <- Full.Projection[rep(rownames(Full.Projection),Groups),]
 
   if(Groups ==1){
     Full.Projection$value <- c(inla.mesh.project(Projection, Model$summary.random$w$mean))
@@ -53,6 +39,8 @@ ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete", Boundary = NULL)
   FieldPlot <- ggplot(Full.Projection,aes(x, y))
 
   if(!is.null(Boundary)){
+    names(Boundary)[1] <- "x"
+    names(Boundary)[2] <- "y"
     FieldPlot <- FieldPlot + geom_polygon(data = Boundary, fill = "white")
   }
 
@@ -65,7 +53,12 @@ ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete", Boundary = NULL)
     labs(x = "Easting", y = "Northing")
 
   if(!is.null(Boundary)){
-    FieldPlot <- FieldPlot + geom_polygon(data = Boundary, fill = NA, colour = "black", size = 2)
+    FieldPlot <- FieldPlot +
+      geom_polygon(data = Boundary,
+                   fill = NA,
+                   colour = "black", size = BoundaryWidth,
+                   inherit.aes = F,
+                   aes(x, y))
   }
 
   if(Groups>1) FieldPlot <- FieldPlot + facet_wrap( ~ Group) + theme(strip.background = element_rect(fill = "white"))
