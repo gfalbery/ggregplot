@@ -3,9 +3,12 @@ BarGraph <- function(df, x, y, z = x,
                      Order = F,
                      Just = F,
                      Text = F,
-                     TextSize = F){
+                     TextSize = F,
+                     Fun = mean){
 
   require(ggplot2); require(dplyr); require(ggforce)
+
+  BarFun <- Fun
 
   df <- df[,c(x,y,z)] %>% na.omit()
 
@@ -14,7 +17,7 @@ BarGraph <- function(df, x, y, z = x,
   df$Colour <- as.factor(df[,z])
 
   Errordf <- df %>% group_by(X, Colour) %>%
-    summarise(Mean = mean(Y, na.rm = T),
+    summarise(Mean = BarFun(Y, na.rm = T),
               sd = sd(Y, na.rm = T),
               N = n()) %>%
     mutate(se = sd/(N^0.5)) %>%
