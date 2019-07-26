@@ -76,6 +76,10 @@ INLARepPlot <- function(ModelList, ModelNames = NULL, Just = F,
 
   require(tidyverse); require(INLA); require(ggregplot)
 
+  if(!class(ModelList)=="list"){
+    ModelList <- list(ModelList)
+  }
+
   OutputList <- lapply(ModelList, function(a) INLARep(a, Family = Family))
 
   for(i in 1:length(OutputList)){

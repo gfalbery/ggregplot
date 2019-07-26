@@ -4,6 +4,10 @@
 INLARange <- function(ModelList, maxrange, Mesh, ModelNames = NULL){
   require(INLA)
 
+  if(!class(ModelList)=="list"){
+    ModelList <- list(ModelList)
+  }
+
   SpFi.w = lapply(ModelList, function(j) inla.spde2.result(inla = j,
                                                            name = "w",
                                                            spde = inla.spde2.pcmatern(mesh = Mesh, prior.range = c(10, 0.5), prior.sigma = c(.5, .5)),

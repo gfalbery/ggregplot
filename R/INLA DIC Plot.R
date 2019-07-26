@@ -1,5 +1,10 @@
 INLADICFig <- function(ModelList, ModelNames = NULL, Just = F, CutOff = 2){
   require(INLA); require(ggplot2)
+
+  if(!class(ModelList)=="list"){
+    ModelList <- list(ModelList)
+  }
+
   df <- data.frame(Model = 1:length(ModelList),
                    DIC = sapply(ModelList, function(m) m$dic$dic))
 

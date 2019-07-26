@@ -5,6 +5,11 @@ THEME<-theme(axis.text.x=element_text(size=12,colour="black"),axis.text.y=elemen
 Efxplot<-function(modellist, sig = TRUE, ModelNames = NULL, tips = 0.2){
   require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm)
   graphlist<-list()
+
+  if(!class(ModelList)=="list"){
+    ModelList <- list(ModelList)
+  }
+
   for(i in 1:length(modellist)){
     model<-modellist[[i]]
 
