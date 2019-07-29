@@ -80,7 +80,13 @@ INLARepPlot <- function(ModelList, ModelNames = NULL, Just = F,
     ModelList <- list(ModelList)
   }
 
+  if(is.null(ModelNames)){
+    ModelNames <- 1:length(ModelList)
+  }
+
   OutputList <- lapply(ModelList, function(a) INLARep(a, Family = Family))
+
+  names(OutputList) <- ModelNames
 
   for(i in 1:length(OutputList)){
     OutputList[[i]] <- OutputList[[i]] %>% mutate(
@@ -162,4 +168,3 @@ INLARepPlot <- function(ModelList, ModelNames = NULL, Just = F,
   }
 
 }
-
