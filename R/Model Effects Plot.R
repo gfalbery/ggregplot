@@ -2,7 +2,7 @@
 library(ggplot2)
 THEME<-theme(axis.text.x=element_text(size=12,colour="black"),axis.text.y=element_text(size=12,colour="black"))+theme(axis.title.x=element_text(vjust=-0.35),axis.title.y=element_text(vjust=1.2))+theme_bw()
 
-Efxplot<-function(modellist, sig = TRUE, ModelNames = NULL, tips = 0.2){
+Efxplot<-function(ModelList, sig = TRUE, ModelNames = NULL, tips = 0.2){
   require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm)
   graphlist<-list()
 
@@ -10,8 +10,8 @@ Efxplot<-function(modellist, sig = TRUE, ModelNames = NULL, tips = 0.2){
     ModelList <- list(ModelList)
   }
 
-  for(i in 1:length(modellist)){
-    model<-modellist[[i]]
+  for(i in 1:length(ModelList)){
+    model<-ModelList[[i]]
 
     if(class(model)=="inla"){
       graph<-as.data.frame(summary(model)$fixed)
