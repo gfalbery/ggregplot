@@ -69,7 +69,10 @@ INLARep <- function(Model, Family = "gaussian"){
   return(ReturnDF)
 }
 
-INLARepPlot <- function(ModelList, ModelNames = NULL, Just = F,
+INLARepPlot <- function(ModelList,
+                        ModelNames = NULL,
+                        VarNames = NULL, VarOrder = NULL,
+                        Just = F,
                         DICOrder = F, CutOff = 0,
                         Family = "gaussian", Residual = T, CI = F,
                         Position = "stack", Plot = T){
@@ -98,6 +101,14 @@ INLARepPlot <- function(ModelList, ModelNames = NULL, Just = F,
   OutputList <- OutputList %>% bind_rows() %>%
     mutate(Var = factor(Var, levels = unique(Var)),
            Model = factor(Model, levels = unique(Model)))
+
+  if(!is.null(VarNames)){
+    levels(OutputList$Var) <- VarNames
+  }
+
+  if(!is.null(VarOrder)){
+    OutputList$Var <- factor(OutputList$Var, levels = VarOrder)
+  }
 
   if(CI){
 
