@@ -1,8 +1,9 @@
 # EfxPlotComp
-library(ggplot2)
-THEME<-theme(axis.text.x=element_text(size=12,colour="black"),axis.text.y=element_text(size=12,colour="black"))+theme(axis.title.x=element_text(vjust=-0.35),axis.title.y=element_text(vjust=1.2))+theme_bw()
 
-Efxplot<-function(ModelList, sig = TRUE, ModelNames = NULL, tips = 0.2){
+Efxplot<-function(ModelList, sig = TRUE,
+                  ModelNames = NULL,
+                  VarNames = NULL, VarOrder = NULL,
+                  tips = 0.2){
   require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm)
   graphlist<-list()
 
@@ -53,11 +54,17 @@ Efxplot<-function(ModelList, sig = TRUE, ModelNames = NULL, tips = 0.2){
 
   position <- ifelse(length(unique(graph$Model)) == 1, "none", "right")
 
+  if(is.null(VarOrder)) VarOrder <- rev(unique(graph$Factor))
+  if(is.null(VarNames)) VarNames <- VarOrder
+
+  graph$Factor <- factor(graph$Factor, levels = VarOrder)
+  levels(graph$Factor) <- VarNames
+
   ggplot(as.data.frame(graph),aes(x=as.factor(Factor),y=Estimate,colour=Model))+
     geom_point(position=position_dodge(w=0.5))+
     geom_errorbar(position=position_dodge(w=0.5), aes(ymin = Lower, ymax = Upper),size=0.3,width=tips)+
-    geom_hline(aes(yintercept=0),lty=2) + THEME + labs(x=NULL) + coord_flip() +
-    scale_x_discrete(limits = rev(unique(graph$Factor))) +
+    geom_hline(aes(yintercept=0),lty=2) + labs(x=NULL) + coord_flip() +
+    scale_x_discrete(limits = VarNames, labels = VarOrder) +
     theme(legend.position = position) +
     geom_text(aes(label = Sig, y = starloc), position = position_dodge(w = 0.5))
 
