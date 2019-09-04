@@ -12,14 +12,18 @@ ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
 
   Dim1 <- dim(Full.Projection)[1]
 
-  if(Groups ==1){
+  if(Groups == 1){
+
     Full.Projection$value <- c(inla.mesh.project(Projection, Model$summary.random$w$mean))
+
   }else{
+
     Full.Projection[,paste0("Group",1:Groups)]<-apply(
       matrix(Model$summary.random$w$mean,ncol=Groups), 2,
       function(x) c(inla.mesh.project(Projection,x)))
 
-    Full.Projection <- reshape2::melt(Full.Projection, id.vars = c(names(Full.Projection)[-which(names(Full.Projection)%in%paste0("Group",1:Groups))]))
+    Full.Projection <-
+      reshape2::melt(Full.Projection, id.vars = c(names(Full.Projection)[-which(names(Full.Projection)%in%paste0("Group",1:Groups))]))
 
   }
 
@@ -50,9 +54,14 @@ ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
   FieldPlot <- FieldPlot +
     geom_tile(colour = "black") +
     geom_tile(colour = NA, aes(fill = Fill)) +
-    guides(fill = guide_legend(reverse = T)) +
     coord_fixed() + labs(fill = "Mean") +
     labs(x = "Easting", y = "Northing")
+
+  if(Fill == "Discrete"){
+
+    FieldPlot <- FieldPlot + guides(fill = guide_legend(reverse = T))
+
+  }
 
   if(!is.null(Boundary)){
     FieldPlot <- FieldPlot +
