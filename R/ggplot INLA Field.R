@@ -20,6 +20,7 @@ ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
       function(x) c(inla.mesh.project(Projection,x)))
 
     Full.Projection <- reshape2::melt(Full.Projection, id.vars = c(names(Full.Projection)[-which(names(Full.Projection)%in%paste0("Group",1:Groups))]))
+
   }
 
   if(Fill == "Discrete"){
@@ -29,7 +30,9 @@ ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
                                 labels = c(round(quantile(Full.Projection$value, 0:9/9, na.rm = T), 2)[1:9]),
                                 include.lowest = T)
   } else{
+
     Full.Projection$Fill <- Full.Projection$value
+
   }
 
   Full.Projection$Group <- rep(1:Groups, each = Dim1)
