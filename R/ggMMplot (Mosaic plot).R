@@ -19,6 +19,6 @@ ggMMplot <- function(df, var1, var2, Alpha = 1){
 
   ggplot(plotData, aes(var1Center, var2Height)) +
     geom_bar(stat = "identity", aes(width = marginVar1, fill = Var2), col = "Black", alpha = Alpha) +
-    geom_text(aes(label = as.character(Var1), x = var1Center, y = 1.05))+labs(x=NULL,y=NULL,fill=var2)+ THEME
+    geom_text(aes(label = as.character(Var1), x = var1Center, y = 1.05))+labs(x=NULL,y=NULL,fill=var2)
 
   }
