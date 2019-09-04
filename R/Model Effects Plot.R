@@ -63,7 +63,7 @@ Efxplot<-function(ModelList, sig = TRUE,
   ggplot(as.data.frame(graph),aes(x=as.factor(Factor),y=Estimate,colour=Model))+
     geom_point(position=position_dodge(w=0.5))+
     geom_errorbar(position=position_dodge(w=0.5), aes(ymin = Lower, ymax = Upper),size=0.3,width=tips)+
-    geom_hline(aes(yintercept=0),lty=2) + THEME + labs(x=NULL) + coord_flip() +
+    geom_hline(aes(yintercept=0),lty=2) + labs(x=NULL) + coord_flip() +
     theme(legend.position = position) +
     geom_text(aes(label = Sig, y = starloc), position = position_dodge(w = 0.5))
 
