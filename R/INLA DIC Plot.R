@@ -18,7 +18,7 @@ INLADICFig <- function(ModelList, ModelNames = NULL, Just = F, CutOff = 2){
 
   ggplot(df, aes(as.numeric(Model), DIC)) +
     geom_point(aes(shape = Competitive)) + scale_shape_manual(values = c(1,2)) +
-    geom_line() + THEME +
+    geom_line() +
     labs(x = "Model") +
     scale_x_continuous(breaks = as.numeric(df$Model),labels = ModelNames) +
     geom_point(data = df[df$Competitive == "Y",]) +

@@ -49,7 +49,6 @@ ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
     geom_tile(colour = NA, aes(fill = Fill)) +
     guides(fill = guide_legend(reverse = T)) +
     coord_fixed() + labs(fill = "Mean") +
-    THEME +
     labs(x = "Easting", y = "Northing")
 
   if(!is.null(Boundary)){
