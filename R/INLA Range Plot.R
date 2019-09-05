@@ -36,9 +36,9 @@ INLARange <- function(ModelList, maxrange, Mesh, ModelNames = NULL){
   return(ggplot(Cor,
                 aes(d.vec,Cor.M,colour = Model, lty = Model))+
 
-           geom_line(size=1,alpha=0.8) + THEME + theme(strip.background = element_rect(fill="white"))+
+           geom_line(size=1,alpha=0.8) +
 
-           labs(colour="Model",x="Distance",y="Correlation") + coord_fixed(ratio = maxrange))
+           labs(colour="Model",x="Distance",y="Correlation"))
 
 }
 
