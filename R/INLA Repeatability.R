@@ -1,5 +1,4 @@
 
-
 # INLA ICC function ####
 
 library(tidyverse)
@@ -8,7 +7,7 @@ INLARep <- function(Model, Family = "gaussian"){
 
   SigmaList <- CIList <- list()
 
-  Parameters <- which(names(Model$marginals.hyperpar) %>%substr(1,9)%in%c("Precision","precision"))
+  Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("Precision","precision", "size"))
   HyperPars <- Model$marginals.hyperpar[Parameters]
 
   for(x in 1:(length(HyperPars))){
@@ -57,6 +56,37 @@ INLARep <- function(Model, Family = "gaussian"){
 
     LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(unlist(SigmaList))))
     UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(unlist(SigmaList))))
+
+  }
+
+  if(Family == "nbinomial"){
+
+    N <- Model$summary.fitted.values %>% row.names %>% str_starts("fitted.APredictor") %>% which %>% max()
+
+    Model$summary.fitted.values[1:N,"mean"] %>% mean ->
+      Beta0
+
+    Ve <- sum(unlist(SigmaList))
+
+    Expected <- exp(Beta0 + (0.5*(Ve))) #Expected values
+
+    sapply(SigmaList, function(Va){
+
+      (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
+
+    }) -> ReturnList
+
+    sapply(map(CIList, 1), function(Va){
+
+      (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
+
+    }) -> LowerList
+
+    sapply(map(CIList, 2), function(Va){
+
+      (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
+
+    }) -> UpperList
 
   }
 
