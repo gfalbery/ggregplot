@@ -10,15 +10,32 @@ INLARep <- function(Model, Family = "gaussian"){
   Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("Precision","precision", "size"))
   HyperPars <- Model$marginals.hyperpar[Parameters]
 
+  Sizes <- names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("size") %>%
+    which()
+
   for(x in 1:(length(HyperPars))){
     tau <- HyperPars[[x]]
-    sigma <- inla.emarginal(function(x) 1/x, tau)
+    if(x == Sizes){
+
+      sigma <- inla.emarginal(function(x) x, tau)
+      ci <- tau %>% inla.tmarginal(function(a) a, .) %>% inla.hpdmarginal(p = 0.95)
+
+    }else{
+
+      sigma <- inla.emarginal(function(x) 1/x, tau)
+      ci <- tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
+
+    }
+
     SigmaList[[x]] <- sigma
-    ci <- tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
     CIList[[x]] <- ci
   }
 
   NameList <- sapply(names(HyperPars), function(a) last(strsplit(a, " ")[[1]]))
+
+  if(length(Sizes)>0){
+    NameList[Sizes] <- "Residual"
+  }
 
   substr(NameList, 1, 1) <- toupper(substr(NameList, 1, 1))
 
