@@ -7,7 +7,10 @@ INLARep <- function(Model, Family = "gaussian"){
 
   SigmaList <- CIList <- list()
 
-  Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("Precision","precision", "size"))
+  Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("Precision","precision", "size", "Range"))
+
+  if(length(Parameters)>0){
+
   HyperPars <- Model$marginals.hyperpar[Parameters]
 
   Sizes <- names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("size") %>%
@@ -15,11 +18,18 @@ INLARep <- function(Model, Family = "gaussian"){
 
   for(x in 1:(length(HyperPars))){
     tau <- HyperPars[[x]]
-    if(x == Sizes){
 
-      sigma <- inla.emarginal(function(x) x, tau)
-      ci <- tau %>% inla.tmarginal(function(a) a, .) %>% inla.hpdmarginal(p = 0.95)
+    if(length(Sizes)>0){
+      if(x == Sizes){
 
+        sigma <- inla.emarginal(function(x) x, tau)
+        ci <- tau %>% inla.tmarginal(function(a) a, .) %>% inla.hpdmarginal(p = 0.95)
+      }else{
+
+        sigma <- inla.emarginal(function(x) 1/x, tau)
+        ci <- tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
+
+      }
     }else{
 
       sigma <- inla.emarginal(function(x) 1/x, tau)
@@ -112,6 +122,14 @@ INLARep <- function(Model, Family = "gaussian"){
     Lower = LowerList,
     Upper = UpperList
   )
+
+  }else{
+
+    ReturnDF <- data.frame(Mean = 1,
+                           Lower = 1,
+                           Upper = 1)
+
+  }
 
   return(ReturnDF)
 }
@@ -214,15 +232,20 @@ INLARepPlot <- function(ModelList,
       lims(y = c(0,max(OutputLong$Upper)))
 
   } else{
+
     RepPlot <- RepPlot +
       lims(y = c(0,1))
 
   }
 
   if(Plot){
+
     return(RepPlot)
+
   }else{
+
     return(OutputLong)
+
   }
 
 }

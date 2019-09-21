@@ -44,7 +44,7 @@ INLARange <- function(ModelList, MaxRange, MeshList, ModelNames = NULL){
 
            geom_line(size=1,alpha=0.8) + coord_fixed(ratio = MaxRange) +
 
-           labs(colour="Model",x="Distance",y="Correlation"))
+           labs(colour ="Model",x = "Distance", y = "Correlation"))
 
 }
 
