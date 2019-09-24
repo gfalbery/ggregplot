@@ -1,4 +1,19 @@
-
+#' Bar-graph
+#'
+#' @param df
+#' @param x
+#' @param y
+#' @param z
+#' @param Order
+#' @param Just
+#' @param Text
+#' @param TextSize
+#' @param Fun
+#'
+#' @return
+#' @export
+#'
+#' @examples
 BarGraph <- function(df, x, y, z = x,
                      Order = F,
                      Just = F,
@@ -6,7 +21,7 @@ BarGraph <- function(df, x, y, z = x,
                      TextSize = F,
                      Fun = mean){
 
-  require(ggplot2); require(dplyr); require(ggforce)
+  # require(ggplot2); require(dplyr); require(ggforce)
 
   BarFun <- Fun
 
