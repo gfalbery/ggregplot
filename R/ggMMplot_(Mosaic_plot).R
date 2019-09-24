@@ -1,4 +1,14 @@
-############ ggMMplot ##############
+#' ggMMplot
+#'
+#' @param df
+#' @param var1
+#' @param var2
+#' @param Alpha
+#'
+#' @return
+#' @export
+#'
+#' @examples
 ggMMplot <- function(df, var1, var2, Alpha = 1){
   require(ggplot2)
   df2<-na.omit(df[,c(var1,var2)])
