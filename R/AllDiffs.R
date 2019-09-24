@@ -1,4 +1,17 @@
-
+#' Deprecated
+#'
+#' Currently, returns `FALSE` all the time.
+#'
+#' @param Var1 A vector
+#' @param Var2 Another vector
+#' @param Lengths A boolean to return the lengths
+#'
+#' @return `Lengths`
+#'
+#' @note
+#'
+#' This function does not make sense, and used nowhere.
+#'
 AllDiffs <- function(Var1, Var2, Lengths = F){
 
   DiffList <- list()
