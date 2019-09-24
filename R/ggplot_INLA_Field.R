@@ -1,5 +1,16 @@
-# ggplot for INLA fields ####
-
+#' ggplot for INLA fields
+#'
+#' @param Model
+#' @param Mesh
+#' @param Groups
+#' @param Fill
+#' @param Boundary
+#' @param BoundaryWidth
+#'
+#' @return
+#' @export
+#'
+#' @examples
 ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
                     Boundary = NULL, BoundaryWidth = 1){#, xlim, ylim){
 
