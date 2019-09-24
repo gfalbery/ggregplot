@@ -1,5 +1,11 @@
-### #AsReml Plot
-
+#' AsReml Plot
+#'
+#' @param model
+#'
+#' @return
+#' @export
+#' @rdname ASR
+#' @examples
 ASRPlot<-function(model){
   df<-na.omit(data.frame(summary(model,all=TRUE)$coef.fixed))
   df$Factor<-rownames(df)

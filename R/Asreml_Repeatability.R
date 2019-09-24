@@ -1,5 +1,13 @@
-######## AsReml Repeatability
-
+#' AsReml Repeatability
+#'
+#' @param model
+#'
+#' @return
+#' @export
+#'
+#' @rdname ASR
+#'
+#' @examples
 AsRepPlot<-function(model){
   require(asreml);require(ggplot2)
   V<-list()

@@ -1,5 +1,12 @@
-########## asreml diagnostics
-
+#' asreml diagnostics
+#'
+#' @param model
+#'
+#' @return
+#' @export
+#'
+#' @rdname ASR
+#' @examples
 AsDiagnostics<-function(model){
   par(ask=F,mfrow=c(1,2))
   plot(AsYoung$fitted.values,AsYoung$residuals)

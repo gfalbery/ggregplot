@@ -1,7 +1,29 @@
-########## Arrange ggplot2 #############
-require(grid)
-vp.layout <- function(x, y) viewport(layout.pos.row=x, layout.pos.col=y)
+#' Arrange ggplot2
+#'
+#' @param x
+#' @param y
+#'
+#' @return
+#' @export
+#'
+#' @rdname arrange_ggplot2
+#'
+#' @examples
+vp.layout <- function(x, y) {viewport(layout.pos.row=x, layout.pos.col=y)}
 
+#' Title
+#'
+#' @param dots
+#' @param nrow
+#' @param ncol
+#' @param as.table
+#'
+#' @return
+#' @export
+#'
+#' @rdname arrange_ggplot2
+#'
+#' @examples
 arrange_ggplot2 <- function(dots, nrow=NULL, ncol=NULL, as.table=FALSE) {
   require(grid)
   n <- length(dots)
