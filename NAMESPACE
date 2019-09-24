@@ -3,3 +3,4 @@
 export(GeomFlatViolin)
 export(ThemeChange)
 export(ThemeRevert)
+export(stat_lm)
