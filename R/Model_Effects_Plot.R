@@ -1,5 +1,16 @@
-# EfxPlotComp
-
+#' EfxPlotComp
+#'
+#' @param ModelList
+#' @param sig
+#' @param ModelNames
+#' @param VarNames
+#' @param VarOrder
+#' @param tips
+#'
+#' @return
+#' @export
+#'
+#' @examples
 Efxplot<-function(ModelList, sig = TRUE,
                   ModelNames = NULL,
                   VarNames = NULL, VarOrder = NULL,
