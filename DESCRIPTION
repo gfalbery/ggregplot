@@ -62,3 +62,5 @@ Collate:
     'Unwhich.R'
     'ggMMplot_(Mosaic_plot).R'
     'ggplot_INLA_Field.R'
+Suggests: 
+    ggplot2
