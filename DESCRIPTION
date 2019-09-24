@@ -62,9 +62,13 @@ Collate:
     'Unwhich.R'
     'ggMMplot_(Mosaic_plot).R'
     'ggplot_INLA_Field.R'
+    'ggregplot-package.R'
 Suggests: 
     ggplot2,
     dplyr,
     ggforce,
+    MCMCglmm,
+    RColorBrewer,
+    grid
 Imports: 
     magrittr
