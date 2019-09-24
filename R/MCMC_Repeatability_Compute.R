@@ -1,3 +1,12 @@
+#' Title
+#'
+#' @param Model
+#' @param scale
+#'
+#' @return
+#' @export
+#'
+#' @examples
 MCMCRep<-function(Model,scale="original"){
   require(MCMCglmm)
   if(scale=="original"){

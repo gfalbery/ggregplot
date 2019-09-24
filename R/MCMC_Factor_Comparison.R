@@ -1,6 +1,12 @@
-
-# Liverpool era factor comparison ####
-
+#' Liverpool era factor comparison
+#'
+#' @param model
+#' @param vars
+#'
+#' @return
+#' @export
+#'
+#' @examples
 MCMCFactorComp<-function(model, vars){
 
   require(MCMCglmm)

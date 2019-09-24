@@ -1,5 +1,13 @@
-# Liverpool era effect size comparison ####
-
+#' Liverpool era effect size comparison
+#'
+#' @param model
+#' @param vars
+#' @param numeric
+#'
+#' @return
+#' @export
+#'
+#' @examples
 MCMCFxComp<-function(model, vars, numeric = T){
 
   require(MCMCglmm)
@@ -112,5 +120,4 @@ MCMCFxComp<-function(model, vars, numeric = T){
   }
 
   FactorCompList
-
 }
