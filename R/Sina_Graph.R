@@ -1,4 +1,19 @@
-
+#' SinaGraph
+#'
+#' @param df
+#' @param x
+#' @param y
+#' @param z
+#' @param Order
+#' @param Just
+#' @param Alpha
+#' @param Scale
+#' @param ColourGroups
+#'
+#' @return A ggplot2 plot object
+#' @export
+#'
+#'
 SinaGraph <- function(df, x, y, z = x,
                       Order = F,
                       Just = F,
@@ -6,7 +21,10 @@ SinaGraph <- function(df, x, y, z = x,
                       Scale = "area",
                       ColourGroups = F){
 
-  require(ggplot2); require(dplyr); require(ggforce)
+  # This shouldn't be part of a package
+  requireNamespace("ggplot2", quietly = TRUE)
+  requireNamespace("dplyr", quietly = TRUE)
+  requireNamespace("ggforce", quietly = TRUE)
 
   df <- df[,c(x,y,z)] %>% na.omit()
 

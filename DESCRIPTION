@@ -63,6 +63,8 @@ Collate:
     'ggMMplot_(Mosaic_plot).R'
     'ggplot_INLA_Field.R'
 Suggests: 
-    ggplot2
+    ggplot2,
+    dplyr,
+    ggforce,
 Imports: 
     magrittr
