@@ -64,3 +64,5 @@ Collate:
     'ggplot_INLA_Field.R'
 Suggests: 
     ggplot2
+Imports: 
+    magrittr
