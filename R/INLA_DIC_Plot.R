@@ -1,4 +1,16 @@
+#' @param ModelList
+#' @param ModelNames
+#' @param Just
+#' @param CutOff
+#'
+#' @return
+#' @export
+#'
+#' @rdname INLA_misc
+#'
+#' @examples
 INLADICFig <- function(ModelList, ModelNames = NULL, Just = F, CutOff = 2){
+  #FIME: use the requiredNamespace
   require(INLA); require(ggplot2)
 
   if(!class(ModelList)=="list"){

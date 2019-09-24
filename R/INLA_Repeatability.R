@@ -1,9 +1,19 @@
-
-# INLA ICC function ####
-
-library(tidyverse)
-
+#' INLA ICC function
+#'
+#' @param Model
+#' @param Family
+#'
+#' @return
+#' @export
+#'
+#' @rdname INLA_misc
+#'
+#' @examples
 INLARep <- function(Model, Family = "gaussian"){
+
+  #FIXME: remove this, the tidyverse is meta-package and shouldn't be loaded
+  #       in other packages
+  # library(tidyverse)
 
   SigmaList <- CIList <- list()
 
@@ -134,6 +144,25 @@ INLARep <- function(Model, Family = "gaussian"){
   return(ReturnDF)
 }
 
+#' @param ModelList
+#' @param ModelNames
+#' @param VarNames
+#' @param VarOrder
+#' @param Just
+#' @param DICOrder
+#' @param CutOff
+#' @param Family
+#' @param Residual
+#' @param CI
+#' @param Position
+#' @param Plot
+#'
+#' @return
+#' @export
+#'
+#' @rdname INLA_misc
+#'
+#' @examples
 INLARepPlot <- function(ModelList,
                         ModelNames = NULL,
                         VarNames = NULL, VarOrder = NULL,
@@ -142,7 +171,12 @@ INLARepPlot <- function(ModelList,
                         Family = "gaussian", Residual = T, CI = F,
                         Position = "stack", Plot = T){
 
-  require(tidyverse); require(INLA); require(ggregplot)
+  #FIXME: remove dependency on tidyverse
+  require(tidyverse); require(INLA);
+  #FIXME: this package IS itself ggregplot.
+  #       Maybe there are functions that needed to be loaded prior to this file.
+  #       For this, use @include
+  # require(ggregplot)
 
   if(!class(ModelList)=="list"){
     ModelList <- list(ModelList)

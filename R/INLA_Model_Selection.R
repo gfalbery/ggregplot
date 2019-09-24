@@ -1,7 +1,20 @@
-
-
+#' @param Response
+#' @param Explanatory
+#' @param Random
+#' @param RandomModel
+#' @param Family
+#' @param Data
+#' @param Delta
+#'
+#' @return
+#' @export
+#'
+#' @rdname INLA_misc
+#'
+#' @examples
 INLAModelSel <- function(Response, Explanatory, Random = NULL, RandomModel = NULL, Family, Data, Delta = 2){
 
+  #FIXME: use requiredNamespace
   require(INLA); require(ggplot2)
 
   Explanatory2 <- paste(Explanatory, collapse = " + ")

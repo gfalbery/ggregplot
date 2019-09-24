@@ -1,3 +1,18 @@
+#' @param Response
+#' @param Explanatory
+#' @param Add
+#' @param Random
+#' @param RandomModel
+#' @param Family
+#' @param Data
+#' @param Delta
+#'
+#' @return
+#' @export
+#'
+#' @rdname INLA_misc
+#'
+#' @examples
 INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL, RandomModel = NULL, Family, Data, Delta = 2){
 
   require(INLA); require(ggplot2)

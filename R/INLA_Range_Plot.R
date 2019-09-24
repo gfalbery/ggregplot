@@ -1,6 +1,16 @@
-
-# Deriving range of autocorrelation figures ####
-
+#' Deriving range of autocorrelation figures
+#'
+#' @param ModelList
+#' @param MaxRange
+#' @param MeshList
+#' @param ModelNames
+#'
+#' @return
+#' @export
+#'
+#' @rdname INLA_misc
+#'
+#' @examples
 INLARange <- function(ModelList, MaxRange, MeshList, ModelNames = NULL){
   require(INLA)
 
