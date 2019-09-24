@@ -1,6 +1,19 @@
 
-# Gretworks ####
-
+#' Gretworks
+#'
+#' @param Data
+#' @param Columns
+#' @param Mode
+#' @param Weighted
+#' @param Directed
+#' @param Scaled
+#' @param Nodes
+#' @param Return
+#'
+#' @return
+#' @export
+#'
+#' @examples
 Gretworks <- function(Data,
                       Columns = c("From", "To"),
                       Mode = "Uni",

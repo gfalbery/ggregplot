@@ -1,6 +1,12 @@
-
-# Quick distance ####
-
+#' Quick distance
+#'
+#' @param Data
+#' @param SubSample
+#'
+#' @return
+#' @export
+#'
+#' @examples
 Gristance <- function(Data, SubSample = F){
 
   if(is.numeric(SubSample)){
