@@ -1,5 +1,15 @@
-#Cumulative Animals
-
+#' Cumulative Animals
+#'
+#' @param df
+#'
+#' @return
+#' @export
+#'
+#' @rdname CumulativeAnimals
+#'
+#' @note There are two version of this function, that does two things.
+#'
+#' @examples
 CumulativeAnimals<-function(df){
   with(df,
   for(x in min(df$Day):(max(df$Day))){
