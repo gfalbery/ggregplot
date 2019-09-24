@@ -1,10 +1,19 @@
-# Quick workspace save ####
-
+#' Quick workspace save
+#'
+#' This saves to hard-drive. Use with care.
+#'
+#' @return Nothing
+#'
+#' @note This function contains personal paths. Therefore it is not exported.
+#' Use with care.
+#'
+#' @examples
 SafeSave <- function(){
-  require(dplyr)
+  # require(dplyr)
+  requireNamespace("dplyr", quietly = TRUE)
 
   WD <- getwd()
-  SafeFolder <- paste0("~/R Workspaces/",last(strsplit(getwd(), "/")[[1]]))
+  SafeFolder <- paste0("~/R Workspaces/", dplyr::last(strsplit(getwd(), "/")[[1]]))
 
   if(!dir.exists(SafeFolder)) dir.create(SafeFolder)
 
