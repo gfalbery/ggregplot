@@ -31,7 +31,7 @@ StatLm <- ggplot2::ggproto("StatLm", Stat,
 #' @return
 #' @export
 #'
-#' @rdname StatLM
+#' @rdname StatLm
 #'
 #' @examples
 stat_lm <- function(mapping = NULL, data = NULL, geom = "line",
