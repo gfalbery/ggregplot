@@ -2,7 +2,7 @@
 #'
 #' Geom_smooth linear model by Hadley Wickham from official ggplot2 site
 #' @rdname StatLm
-StatLm <- ggplot2::ggproto("StatLm", Stat,
+StatLm <- ggplot2::ggproto("StatLm", ggplot2::Stat,
                   required_aes = c("x", "y"),
 
                   compute_group = function(data, scales) {
