@@ -1,3 +1,15 @@
+#' Title
+#'
+#' @param x
+#' @param df
+#' @param Aesthetic
+#' @param Method
+#' @param Parasites
+#'
+#' @return
+#' @export
+#'
+#' @examples
 Explote<-function(x,df,Aesthetic="variable",Method="lm",Parasites=MainParasites){
   require(reshape2);require(ggplot2);require(grid)
   RDeer_long<-melt(df,
