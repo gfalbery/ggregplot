@@ -1,6 +1,14 @@
-
-# Plot to compare matrix values ####
-
+#' Plot to compare matrix values
+#'
+#' @param Matrix1
+#' @param Matrix2
+#' @param Names
+#' @param Axes
+#'
+#' @return
+#' @export
+#'
+#' @examples
 MatrixPoints <- function(Matrix1, Matrix2, Names = NULL, Axes = NULL){
 
   require(Matrix)
