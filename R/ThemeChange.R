@@ -6,6 +6,7 @@
 #'
 #' @note
 #'
+#' @include Establishing_Themes_and_Palettes.R
 #'
 #' This function should have an include tag for "Establishing Themes and Palettes.R"
 #'

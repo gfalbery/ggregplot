@@ -16,8 +16,6 @@ Nothing
 Needs fixing
 }
 \note{
-This function should have an include tag for "Establishing Themes and Palettes.R"
-
 This function should return to the theme that was present before this function was
 invoked, i.e. using \code{CurrentTheme}.
 }
