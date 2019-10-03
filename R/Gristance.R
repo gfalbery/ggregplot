@@ -7,6 +7,7 @@
 #' @export
 #'
 #' @examples
+
 Gristance <- function(Data, SubSample = F){
 
   if(is.numeric(SubSample)){
