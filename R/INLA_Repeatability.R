@@ -17,121 +17,125 @@ INLARep <- function(Model, Family = "gaussian"){
 
   SigmaList <- CIList <- list()
 
-  Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("Precision","precision", "size", "Range"))
+  Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>%
+                        map(1) %in%c("Precision","precision", "size", "Range"))
 
   if(length(Parameters)>0){
 
-  HyperPars <- Model$marginals.hyperpar[Parameters]
+    HyperPars <- Model$marginals.hyperpar[Parameters]
 
-  Sizes <- names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("size") %>%
-    which()
+    Sizes <- names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("size") %>%
+      which()
 
-  for(x in 1:(length(HyperPars))){
-    tau <- HyperPars[[x]]
+    for(x in 1:(length(HyperPars))){
+      tau <- HyperPars[[x]]
 
-    if(length(Sizes)>0){
-      if(x == Sizes){
+      if(length(Sizes)>0){
+        if(x == Sizes){
 
-        sigma <- inla.emarginal(function(x) x, tau)
-        ci <- tau %>% inla.tmarginal(function(a) a, .) %>% inla.hpdmarginal(p = 0.95)
+          sigma <- inla.emarginal(function(x) x, tau)
+          ci <- tau %>% inla.tmarginal(function(a) a, .) %>% inla.hpdmarginal(p = 0.95)
+        }else{
+
+          sigma <- inla.emarginal(function(x) 1/x, tau)
+          ci <- tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
+
+        }
       }else{
 
         sigma <- inla.emarginal(function(x) 1/x, tau)
         ci <- tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
 
       }
-    }else{
 
-      sigma <- inla.emarginal(function(x) 1/x, tau)
-      ci <- tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
+      SigmaList[[x]] <- sigma
+      CIList[[x]] <- ci
+    }
+
+    NameList <- sapply(names(HyperPars), function(a) last(strsplit(a, " ")[[1]]))
+
+    if(length(Sizes)>0){
+      NameList[Sizes] <- "Residual"
+    }
+
+    substr(NameList, 1, 1) <- toupper(substr(NameList, 1, 1))
+
+    if(any(NameList=="Observations")) NameList[NameList=="Observations"] <- "Residual"
+
+    names(SigmaList) <- NameList
+
+    if(any(names(Model$marginals.hyperpar) %>%substr(1,5)=="Range")){
+
+      Var <- names(Model$marginals.hyperpar)[which(names(Model$marginals.hyperpar) %>%substr(1,5)=="Range")]
+      Expl <- Var %>% str_split(" ") %>% last %>% last
+
+      i1 = inla.spde.result(Model, Expl, spde)
+      i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.mmarginal()
+
+      SigmaList$SPDE <- i2
+
+      ci <- i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
+      CIList$SPDE <- ci
+
+      CIList[[which(names(SigmaList) == "W")]] <- NULL
+      SigmaList$W <- NULL
 
     }
 
-    SigmaList[[x]] <- sigma
-    CIList[[x]] <- ci
-  }
+    if(Family == "binomial"){
 
-  NameList <- sapply(names(HyperPars), function(a) last(strsplit(a, " ")[[1]]))
+      ReturnList <- sapply(SigmaList, function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
 
-  if(length(Sizes)>0){
-    NameList[Sizes] <- "Residual"
-  }
+      LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
+      UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
 
-  substr(NameList, 1, 1) <- toupper(substr(NameList, 1, 1))
+    }
 
-  if(any(NameList=="Observations")) NameList[NameList=="Observations"] <- "Residual"
+    if(Family == "gaussian"){
 
-  names(SigmaList) <- NameList
+      ReturnList <- sapply(SigmaList, function(a) a/(sum(unlist(SigmaList))))
 
-  if(any(names(Model$marginals.hyperpar) %>%substr(1,5)=="Range")){
+      LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(unlist(SigmaList))))
+      UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(unlist(SigmaList))))
 
-    Var <- names(Model$marginals.hyperpar)[which(names(Model$marginals.hyperpar) %>%substr(1,5)=="Range")]
-    Expl <- Var %>% str_split(" ") %>% last %>% last
+    }
 
-    i1 = inla.spde.result(Model, Expl, spde)
-    i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.mmarginal()
+    if(Family == "nbinomial"){
 
-    SigmaList$SPDE <- i2
+      N <- Model$summary.fitted.values %>% row.names %>% str_starts("fitted.APredictor") %>% which %>% max()
 
-    ci <- i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
-    CIList$SPDE <- ci
+      Model$summary.fitted.values[1:N,"mean"] %>% mean ->
+        Beta0
 
-  }
+      Ve <- sum(unlist(SigmaList))
 
-  if(Family == "binomial"){
+      Expected <- exp(Beta0 + (0.5*(Ve))) #Expected values
 
-    ReturnList <- sapply(SigmaList, function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
+      sapply(SigmaList, function(Va){
 
-    LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
-    UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
+        (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
 
-  }
+      }) -> ReturnList
 
-  if(Family == "gaussian"){
+      sapply(map(CIList, 1), function(Va){
 
-    ReturnList <- sapply(SigmaList, function(a) a/(sum(unlist(SigmaList))))
+        (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
 
-    LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(unlist(SigmaList))))
-    UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(unlist(SigmaList))))
+      }) -> LowerList
 
-  }
+      sapply(map(CIList, 2), function(Va){
 
-  if(Family == "nbinomial"){
+        (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
 
-    N <- Model$summary.fitted.values %>% row.names %>% str_starts("fitted.APredictor") %>% which %>% max()
+      }) -> UpperList
 
-    Model$summary.fitted.values[1:N,"mean"] %>% mean ->
-      Beta0
+    }
 
-    Ve <- sum(unlist(SigmaList))
-
-    Expected <- exp(Beta0 + (0.5*(Ve))) #Expected values
-
-    sapply(SigmaList, function(Va){
-
-      (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
-
-    }) -> ReturnList
-
-    sapply(map(CIList, 1), function(Va){
-
-      (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
-
-    }) -> LowerList
-
-    sapply(map(CIList, 2), function(Va){
-
-      (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
-
-    }) -> UpperList
-
-  }
-
-  ReturnDF <- data.frame(
-    Mean = ReturnList,
-    Lower = LowerList,
-    Upper = UpperList
-  )
+    ReturnDF <- data.frame(
+      Mean = ReturnList,
+      Lower = LowerList,
+      Upper = UpperList
+    )
 
   }else{
 

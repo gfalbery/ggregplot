@@ -8,6 +8,16 @@
 #' @rdname INLA_misc
 #'
 #' @examples
+
 MDIC <- function(model) {
-  model$dic$dic
+
+  if(class(model) == "list"){
+
+    model %>% map("dic") %>% map("dic")
+
+  }else{
+
+    model$dic$dic
+
+  }
 }
