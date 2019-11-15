@@ -7,8 +7,9 @@ theme_set(theme_cowplot())
 
 N <- 35
 
-Data <- data.frame(X = rnorm(n = N, mean = 50, sd = 50),
-                   image = "~/ggregplot/Data/Picture1.png") %>%
+Data <- data.frame(X = rnorm(n = N, mean = 50, sd = 30),
+                   #image = "~/ggregplot/Data/Picture1.png") %>%
+                   image = "https://raw.githubusercontent.com/gfalbery/ggregplot/master/Data/Picture1.png") %>%
   mutate(Y = X + rnorm(n = N, mean = 0, sd = 25))
 
 ggplot(Data, aes(X, Y)) +
@@ -18,7 +19,7 @@ ggplot(Data, aes(X, Y)) +
   geom_image(aes(image=image), size = runif(N, 0, 0.15)) +
   lims(x = c(-10, 110), y = c(-10, 110))
 
-geom_cena <- function(Sizes = 0.05){
+geom_cena <- function(Sizes = 0.1){
 
   geom_image(aes(image = "~/ggregplot/Data/Picture1.png"),
              size = Sizes)
