@@ -1,11 +1,4 @@
-#' ModelVarPlote
-#'
-#' @param model
-#'
-#' @return
-#' @export
-#'
-#' @examples
+##### ModelVarPlote
 ModelVarPlote<-function(model){
   graph<-unique(data.frame(rbind(summary(model)$Gcovariances,summary(model)$Rcovariances)))
   graph$Factor<-0

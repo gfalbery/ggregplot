@@ -1,15 +1,5 @@
-#' Theme Changing
-#'
-#'
-#' @return Nothing
-#' @export
-#'
-#' @note
-#'
-#' @include Establishing_Themes_and_Palettes.R
-#'
-#' This function should have an include tag for "Establishing Themes and Palettes.R"
-#'
+# Theme Changing #####
+
 ThemeChange <- function(){
 
   CurrentTheme <- theme_get()
@@ -26,16 +16,4 @@ ThemeChange <- function(){
 
 }
 
-#' ThemeRevert
-#'
-#' Needs fixing
-#'
-#' @export
-#'
-#' @note
-#'
-#' This function should return to the theme that was present before this function was
-#' invoked, i.e. using `CurrentTheme`.
-#'
-#' @rdname  ThemeChange
 ThemeRevert <- function() theme_set(DefaultTheme)

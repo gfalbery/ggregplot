@@ -1,12 +1,5 @@
-#' Quick distance
-#'
-#' @param Data
-#' @param SubSample
-#'
-#' @return
-#' @export
-#'
-#' @examples
+
+# Quick distance ####
 
 Gristance <- function(Data, SubSample = F){
 

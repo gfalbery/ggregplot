@@ -1,11 +1,3 @@
-#' Title
-#'
-#' @param model
-#'
-#' @return
-#' @export
-#'
-#' @examples
 ModelPlote<-function(model){
   graph<-summary(model)$solutions
   ggplot(as.data.frame(graph),aes(x=rownames(graph),y=post.mean))+geom_point()+geom_errorbar(aes(ymin=graph[,"l-95% CI"],ymax=graph[,"u-95% CI"]),size=0.3,width=0.4)+
