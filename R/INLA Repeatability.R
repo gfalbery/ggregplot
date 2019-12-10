@@ -51,10 +51,10 @@ INLARep <- function(Model, Family = "gaussian"){
 
     names(SigmaList) <- NameList
 
-    if(any(names(Model$marginals.hyperpar) %>% str_detect("Range")){
+    if(any(names(Model$marginals.hyperpar) %>% str_detect("Range"))){
 
       Var <- names(Model$marginals.hyperpar)[which(names(Model$marginals.hyperpar) %>%
-                                                     str_detect(="Range"))]
+                                                     str_detect("Range"))]
 
       Expl <- Var %>% str_split(" ") %>% last %>% last
 
