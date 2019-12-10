@@ -1,10 +1,13 @@
 # EfxPlotComp
 
-Efxplot<-function(ModelList, sig = TRUE,
-                  ModelNames = NULL,
-                  VarNames = NULL, VarOrder = NULL,
-                  tips = 0.2){
+Efxplot <- function(ModelList, Sig = TRUE,
+                    ModelNames = NULL,
+                    VarNames = NULL, VarOrder = NULL,
+                    Intercept = TRUE,
+                    tips = 0.2){
+
   require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm)
+
   graphlist<-list()
 
   if(!class(ModelList)=="list"){
@@ -35,18 +38,9 @@ Efxplot<-function(ModelList, sig = TRUE,
 
   graph<-bind_rows(graphlist)
 
-  graph$starloc<-NA
+  graph$Sig <- with(graph,ifelse((Lower<0&Upper<0)|(Lower>0&Upper>0),"*",""))
 
-  min<-min(graph$Lower,na.rm=T)
-  max<-max(graph$Upper,na.rm=T)
-
-  if(sig==TRUE){
-    graph$starloc <- max+(max-min)/10
-  }
-
-  graph$Sig<-with(graph,ifelse((Lower<0&Upper<0)|(Lower>0&Upper>0),"*",""))
-
-  graph$Model<-as.factor(graph$Model)
+  graph$Model <- as.factor(graph$Model)
 
   if(!is.null(ModelNames)){
     levels(graph$Model)<-ModelNames
@@ -59,6 +53,25 @@ Efxplot<-function(ModelList, sig = TRUE,
 
   graph$Factor <- factor(graph$Factor, levels = VarOrder)
   levels(graph$Factor) <- VarNames
+
+  if(!Intercept){
+
+    VarNames <- VarNames[!str_detect(VarNames, "ntercept")]
+
+    graph <- graph %>% filter(Factor %in% VarNames)
+
+  }
+
+  graph$starloc<-NA
+
+  min<-min(graph$Lower,na.rm=T)
+  max<-max(graph$Upper,na.rm=T)
+
+  if(Sig==TRUE){
+
+    graph$starloc <- max+(max-min)/10
+
+  }
 
   ggplot(as.data.frame(graph),aes(x=as.factor(Factor),y=Estimate,colour=Model))+
     geom_point(position=position_dodge(w=0.5))+

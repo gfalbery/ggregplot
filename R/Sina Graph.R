@@ -4,6 +4,7 @@ SinaGraph <- function(df, x, y, z = x,
                       Just = F,
                       Alpha = 1,
                       Scale = "area",
+                      Mean = T,
                       ColourGroups = F){
 
   require(ggplot2); require(dplyr); require(ggforce)
@@ -39,38 +40,40 @@ SinaGraph <- function(df, x, y, z = x,
               scale = Scale) +
     labs(x = x, y = y)
 
-  if(ColourGroups){
+  if(Mean){
 
-    SPlot <- SPlot +
-      geom_point(data = Errordf,
-                 aes(y = Mean, group = as.factor(Colour)),
-                 colour = "black",
-                 position = position_dodge(0.9)) +
-      geom_errorbar(data = Errordf, inherit.aes = F,
-                    aes(x = as.factor(X),
-                        ymin = Mean - se,
-                        ymax = Mean + se,
-                        group = as.factor(Colour)),
-                    width = 0.1,
-                    colour = "black",
-                    position = position_dodge(0.9))
-  } else{
+    if(ColourGroups){
 
-    SPlot <- SPlot +
-      geom_point(data = Errordf,
-                 aes(y = Mean),
-                 colour = "black",
-                 position = position_dodge(0.9)) +
-      geom_errorbar(data = Errordf, inherit.aes = F,
-                    aes(x = as.factor(X),
-                        ymin = Mean - se,
-                        ymax = Mean + se),
-                    width = 0.1,
-                    colour = "black",
-                    position = position_dodge(0.9))
+      SPlot <- SPlot +
+        geom_point(data = Errordf,
+                   aes(y = Mean, group = as.factor(Colour)),
+                   colour = "black",
+                   position = position_dodge(0.9)) +
+        geom_errorbar(data = Errordf, inherit.aes = F,
+                      aes(x = as.factor(X),
+                          ymin = Mean - se,
+                          ymax = Mean + se,
+                          group = as.factor(Colour)),
+                      width = 0.1,
+                      colour = "black",
+                      position = position_dodge(0.9))
+    } else{
 
+      SPlot <- SPlot +
+        geom_point(data = Errordf,
+                   aes(y = Mean),
+                   colour = "black",
+                   position = position_dodge(0.9)) +
+        geom_errorbar(data = Errordf, inherit.aes = F,
+                      aes(x = as.factor(X),
+                          ymin = Mean - se,
+                          ymax = Mean + se),
+                      width = 0.1,
+                      colour = "black",
+                      position = position_dodge(0.9))
+
+    }
   }
-
 
   if(z != y) SPlot <- SPlot + labs(colour = z)
 

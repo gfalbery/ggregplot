@@ -2,10 +2,6 @@
 
 INLARep <- function(Model, Family = "gaussian"){
 
-  #FIXME: remove this, the tidyverse is meta-package and shouldn't be loaded
-  #       in other packages
-  # library(tidyverse)
-
   SigmaList <- CIList <- list()
 
   Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>%
@@ -55,9 +51,11 @@ INLARep <- function(Model, Family = "gaussian"){
 
     names(SigmaList) <- NameList
 
-    if(any(names(Model$marginals.hyperpar) %>%substr(1,5)=="Range")){
+    if(any(names(Model$marginals.hyperpar) %>% str_detect("Range")){
 
-      Var <- names(Model$marginals.hyperpar)[which(names(Model$marginals.hyperpar) %>%substr(1,5)=="Range")]
+      Var <- names(Model$marginals.hyperpar)[which(names(Model$marginals.hyperpar) %>%
+                                                     str_detect(="Range"))]
+
       Expl <- Var %>% str_split(" ") %>% last %>% last
 
       i1 = inla.spde.result(Model, Expl, spde)
@@ -139,39 +137,15 @@ INLARep <- function(Model, Family = "gaussian"){
   return(ReturnDF)
 }
 
-#' @param ModelList
-#' @param ModelNames
-#' @param VarNames
-#' @param VarOrder
-#' @param Just
-#' @param DICOrder
-#' @param CutOff
-#' @param Family
-#' @param Residual
-#' @param CI
-#' @param Position
-#' @param Plot
-#'
-#' @return
-#' @export
-#'
-#' @rdname INLA_misc
-#'
-#' @examples
 INLARepPlot <- function(ModelList,
                         ModelNames = NULL,
                         VarNames = NULL, VarOrder = NULL,
-                        Just = F,
+                        Just = F, Outline = F,
                         DICOrder = F, CutOff = 0,
                         Family = "gaussian", Residual = T, CI = F,
                         Position = "stack", Plot = T){
 
-  #FIXME: remove dependency on tidyverse
   require(tidyverse); require(INLA);
-  #FIXME: this package IS itself ggregplot.
-  #       Maybe there are functions that needed to be loaded prior to this file.
-  #       For this, use @include
-  # require(ggregplot)
 
   if(!class(ModelList)=="list"){
     ModelList <- list(ModelList)
@@ -243,8 +217,10 @@ INLARepPlot <- function(ModelList,
 
   if(Just){ Angle = 45; Hjust = 1 }else{ Angle = 0; Hjust = 0.5}
 
+  Colour <- ifelse(Outline, "black", NULL)
+
   RepPlot <- ggplot(OutputLong, aes(factor(Model), Variance, fill = Var)) +
-    geom_col(position = Position) +
+    geom_col(position = Position, colour = Colour) +
     labs(x = "Model") +
     theme(axis.text.x = element_text(angle = Angle, hjust = Hjust))
 
