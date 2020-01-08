@@ -86,7 +86,7 @@ INLARange <- function(ModelList, MaxRange, MeshList,
 
   }else{
 
-    return(unlist(ReturnList))
+    return(ReturnList[[1]])
 
   }
 
