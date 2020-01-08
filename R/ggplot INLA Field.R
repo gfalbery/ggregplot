@@ -1,7 +1,8 @@
 # ggplot for INLA fields ####
 
 ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
-                    Boundary = NULL, BoundaryWidth = 1){#, xlim, ylim){
+                    Boundary = NULL, BoundaryWidth = 1,
+                    Points = NULL, PointAlpha = 1, PointColour = "black"){#, xlim, ylim){
 
   require(ggplot2); require(INLA); require(tidyverse)
 
@@ -73,6 +74,16 @@ ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
   }
 
   if(Groups>1) FieldPlot <- FieldPlot + facet_wrap( ~ Group) + theme(strip.background = element_rect(fill = "white"))
+
+  if(!is.null(Points)){
+
+    Points$X <- Points[,1]
+    Points$Y <- Points[,2]
+
+    FieldPlot <- FieldPlot +
+      geom_point(data = Points, inherit.aes = F, aes(X, Y), alpha = PointAlpha, colour = PointColour)
+
+  }
 
   return(FieldPlot)
 
