@@ -1,67 +1,111 @@
 
 # INLA Predictions ####
 
-INLAPredictions <- function(Data, Response, FixedCovar, Model, Mesh = NULL, Points = NULL){
+INLAFit <- function(Model, TestDF,
+                    FixedCovar = NULL,
+                    Locations = NULL,
+                    Mesh = NULL){
 
-  PredictionCorDF <- data.frame(Observed = Data[,Response])
-
-  TestDF <- Data %>% rownames_to_column()
+  require(INLA)
 
   RandomEstimates <- Model$summary.random
 
   RandomCovar <- names(RandomEstimates) %>% setdiff("w")
 
-  lapply(RandomCovar, function(a){
+  if(length(RandomCovar)>0){
 
-    print(a)
+    lapply(RandomCovar, function(a){
 
-    TestDF %>% spread(a, "rowname") -> NewDF
+      print(a)
 
-    NewDF %>% select((ncol(TestDF)+1):ncol(NewDF)) %>%
-      mutate_all(function(b) 1 - as.numeric(is.na(b))) -> NewDF
+      model.matrix(as.formula(paste0("~ -1 + ", a)), data = TestDF) -> NewDF
 
-    colnames(NewDF) <- paste0(a, ".", colnames(NewDF))
+      colnames(NewDF) %>% str_replace_all(a, paste0(a, ".")) ->
+        colnames(NewDF)
 
-    return(NewDF)
+      NewDF <- NewDF %>% as.data.frame()
 
-  }) %>% bind_cols() %>% as.matrix -> RandomXMatrix
+      return(NewDF)
+
+    }) %>% bind_cols() %>% as.matrix -> RandomXMatrix
+
+    lapply(1:length(RandomCovar), function(i){
+
+      FocalEstimates <- RandomEstimates[[RandomCovar[i]]]$mean %>%
+        data.frame() %>% t %>% as.data.frame()
+
+      names(FocalEstimates) <- paste0(RandomCovar[i], ".", RandomEstimates[[RandomCovar[i]]]$ID)
+
+      return(FocalEstimates)
+
+    }) %>% bind_cols %>% unlist -> RandomEstimateVector
+
+  }
 
   # Fixed effects ####
 
   FixedEstimates <- Model$summary.fixed
 
-  f1 <- as.formula(paste0("~ 1 +", paste0(FixedCovar, collapse = " + ")))
+  TestDF$Intercept <- 1
 
-  FixedXMatrix <- model.matrix(f1, data = TestDF) %>% as.matrix
+  if(!is.null(dim(FixedEstimates))){
 
-  colnames(FixedXMatrix)[1] <- "Intercept"
+    f1 <- as.formula(paste0("~ 1 +", paste0(FixedCovar, collapse = " + ")))
+
+    FixedXMatrix <- model.matrix(f1, data = TestDF) %>% as.matrix
+
+    colnames(FixedXMatrix)[1] <- "Intercept"
+
+  }else{
+
+    f1 <- as.formula(paste0("~ 1 +", paste0(FixedCovar, collapse = " + ")))
+
+    FixedXMatrix <- model.matrix(f1, data = TestDF) %>% as.matrix
+
+    colnames(FixedXMatrix)[1] <- "Intercept"
+
+  }
 
   # Putting them together
 
-  XMatrix <- cbind(FixedXMatrix, RandomXMatrix)
+  if(length(RandomCovar)>0){
 
-  FixedEstimateVector <- FixedEstimates$mean
+    XMatrix <- cbind(FixedXMatrix, RandomXMatrix)
 
-  names(FixedEstimateVector) <- rownames(FixedEstimates)
+    FixedEstimateVector <- FixedEstimates$mean
 
-  lapply(1:length(RandomCovar), function(i){
+    names(FixedEstimateVector) <- rownames(FixedEstimates)
 
-    FocalEstimates <- RandomEstimates[[RandomCovar[i]]]$mean %>%
-      data.frame() %>% t %>% as.data.frame()
+    EstimateVector <- c(FixedEstimateVector, RandomEstimateVector)[colnames(XMatrix)]
 
-    names(FocalEstimates) <- paste0(RandomCovar[i],".",RandomEstimates[[RandomCovar[i]]]$ID)
+    (EstimateVector[colnames(XMatrix)] %*% t(XMatrix)) %>% c -> Predictions
 
-    return(FocalEstimates)
+  }else{
 
-  }) %>% bind_cols %>% unlist -> RandomEstimateVector
+    XMatrix <- FixedXMatrix
 
-  EstimateVector <- c(FixedEstimateVector, RandomEstimateVector)[colnames(XMatrix)]
+    FixedEstimateVector <- FixedEstimates$mean
 
-  (EstimateVector[colnames(XMatrix)] %*% t(XMatrix)) %>% c -> Predictions
+    names(FixedEstimateVector) <- rownames(FixedEstimates)
+
+    EstimateVector <- c(FixedEstimateVector)[colnames(XMatrix)]
+
+    (EstimateVector[colnames(XMatrix)] %*% t(XMatrix)) %>% c ->
+
+      Predictions
+
+  }
 
   if("w" %in% names(RandomEstimates)){
 
-    Projection <- inla.mesh.projector(Mesh, as.matrix(Points), dims = c(300, 300))
+    if(!class(Locations) == "matrix"){
+
+      Locations <- as.matrix(Locations)
+
+    }
+
+    Projection <- inla.mesh.projector(mesh = Mesh, loc = Locations, dims = c(300, 300))
+
     WPredictions <- c(inla.mesh.project(Projection, Model$summary.random$w$mean))
 
     FullPredictions <- Predictions + WPredictions
@@ -72,8 +116,6 @@ INLAPredictions <- function(Data, Response, FixedCovar, Model, Mesh = NULL, Poin
 
   }
 
-  PredictionCorDF$Predicted <- FullPredictions
-
-  return(PredictionCorDF)
+  FullPredictions %>% return
 
 }
