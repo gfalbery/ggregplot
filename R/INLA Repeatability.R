@@ -2,6 +2,8 @@
 
 INLARep <- function(Model, Family = "gaussian"){
 
+  require(ggregplot); require(INLA)
+
   SigmaList <- CIList <- list()
 
   Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>%
@@ -93,8 +95,7 @@ INLARep <- function(Model, Family = "gaussian"){
 
       N <- Model$summary.fitted.values %>% row.names %>% str_starts("fitted.APredictor") %>% which %>% max()
 
-      Model$summary.fitted.values[1:N,"mean"] %>% mean ->
-        Beta0
+      Model %>% INLAFit -> Beta0
 
       Ve <- sum(unlist(SigmaList))
 
@@ -217,7 +218,7 @@ INLARepPlot <- function(ModelList,
 
   if(Just){ Angle = 45; Hjust = 1 }else{ Angle = 0; Hjust = 0.5}
 
-  Colour <- ifelse(Outline, "black", NULL)
+  Colour <- ifelse(Outline, "black", NA)
 
   RepPlot <- ggplot(OutputLong, aes(factor(Model), Variance, fill = Var)) +
     geom_col(position = Position, colour = Colour) +
