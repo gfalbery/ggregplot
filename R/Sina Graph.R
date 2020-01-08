@@ -5,6 +5,7 @@ SinaGraph <- function(df, x, y, z = x,
                       Alpha = 1,
                       Scale = "area",
                       Mean = T,
+                      Violin = F,
                       ColourGroups = F){
 
   require(ggplot2); require(dplyr); require(ggforce)
@@ -16,29 +17,53 @@ SinaGraph <- function(df, x, y, z = x,
   df$Colour <- df[,z]
 
   if(ColourGroups){
+
     Errordf <- df %>% group_by(X, Colour) %>%
       summarise(Mean = mean(Y),
                 sd = sd(Y),
                 N = n()) %>%
       mutate(se = sd/(N^0.5)) %>%
       as.data.frame() %>%
-      slice(order(Mean, decreasing = T))
+      arrange(Mean)
+
   } else {
+
     Errordf <- df %>% group_by(X) %>%
       summarise(Mean = mean(Y),
                 sd = sd(Y),
                 N = n()) %>%
       mutate(se = sd/(N^0.5)) %>%
       as.data.frame() %>%
-      slice(order(Mean, decreasing = T))
+      arrange(Mean)
   }
 
-  SPlot <- df %>%
-    ggplot(aes(as.factor(X), Y, colour = as.factor(Colour))) +
-    geom_sina(position = position_dodge(0.9),
-              alpha = Alpha,
-              scale = Scale) +
-    labs(x = x, y = y)
+  if(Order){
+
+    df %>% mutate(X = factor(X, levels = Errordf$X)) %>%
+      mutate(Colour = factor(Colour, levels = Errordf$X)) -> df
+
+  }
+
+  if(Violin){
+
+    SPlot <- df %>%
+      ggplot(aes(X, Y, colour = Colour)) +
+      geom_violin(scale = Scale) +
+      geom_sina(position = position_dodge(0.9),
+                alpha = Alpha,
+                scale = Scale) +
+      labs(x = x, y = y)
+
+  }else{
+
+    SPlot <- df %>%
+      ggplot(aes(X, Y, colour = Colour)) +
+      geom_sina(position = position_dodge(0.9),
+                alpha = Alpha,
+                scale = Scale) +
+      labs(x = x, y = y)
+
+  }
 
   if(Mean){
 
@@ -77,7 +102,6 @@ SinaGraph <- function(df, x, y, z = x,
 
   if(z != y) SPlot <- SPlot + labs(colour = z)
 
-  if(Order) SPlot <- SPlot + scale_x_discrete(limits = rev(unique(Errordf$X)))
   if(Just) SPlot <- SPlot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
   SPlot
