@@ -16,8 +16,6 @@ INLAFit <- function(Model, TestDF,
 
     lapply(RandomCovar, function(a){
 
-      print(a)
-
       model.matrix(as.formula(paste0("~ -1 + ", a)), data = TestDF) -> NewDF
 
       colnames(NewDF) %>% str_replace_all(a, paste0(a, ".")) ->
@@ -48,7 +46,7 @@ INLAFit <- function(Model, TestDF,
 
   TestDF$Intercept <- 1
 
-  if(!is.null(dim(FixedEstimates))){
+  if(!is.null(FixedCovar)){
 
     f1 <- as.formula(paste0("~ 1 +", paste0(FixedCovar, collapse = " + ")))
 
@@ -58,9 +56,9 @@ INLAFit <- function(Model, TestDF,
 
   }else{
 
-    f1 <- as.formula(paste0("~ 1 +", paste0(FixedCovar, collapse = " + ")))
+    f1 <- as.formula("~ 1")
 
-    FixedXMatrix <- model.matrix(f1, data = TestDF) %>% as.matrix
+    FixedXMatrix <- model.matrix(f1, data = TestDF)# %>% as.matrix
 
     colnames(FixedXMatrix)[1] <- "Intercept"
 

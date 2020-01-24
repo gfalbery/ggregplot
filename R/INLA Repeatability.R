@@ -1,6 +1,6 @@
 # INLA ICC function
 
-INLARep <- function(Model, Family = "gaussian"){
+INLARep <- function(Model, Family = "gaussian", ...){
 
   require(ggregplot); require(INLA)
 
@@ -93,9 +93,7 @@ INLARep <- function(Model, Family = "gaussian"){
 
     if(Family == "nbinomial"){
 
-      N <- Model$summary.fitted.values %>% row.names %>% str_starts("fitted.APredictor") %>% which %>% max()
-
-      Model %>% INLAFit -> Beta0
+      Model %>% INLAFit(., ...) %>% mean -> Beta0 #TestDF = Data, FixedCovar = FixedCovar, Locations = Locations, Mesh = Mesh) -> Beta0
 
       Ve <- sum(unlist(SigmaList))
 
@@ -143,20 +141,25 @@ INLARepPlot <- function(ModelList,
                         VarNames = NULL, VarOrder = NULL,
                         Just = F, Outline = F,
                         DICOrder = F, CutOff = 0,
-                        Family = "gaussian", Residual = T, CI = F,
-                        Position = "stack", Plot = T){
+                        Residual = T, CI = F,
+                        Position = "stack", Plot = T,
+                        ...){
 
   require(tidyverse); require(INLA);
 
   if(!class(ModelList)=="list"){
+
     ModelList <- list(ModelList)
+
   }
 
   if(is.null(ModelNames)){
+
     ModelNames <- 1:length(ModelList)
+
   }
 
-  OutputList <- lapply(ModelList, function(a) INLARep(a, Family = Family))
+  OutputList <- lapply(ModelList, function(a) INLARep(a, ...))
 
   names(OutputList) <- ModelNames
 
