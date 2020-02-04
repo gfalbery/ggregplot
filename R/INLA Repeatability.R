@@ -93,7 +93,7 @@ INLARep <- function(Model, Family = "gaussian", ...){
 
     if(Family == "nbinomial"){
 
-      Model %>% INLAFit(., ...) %>% mean -> Beta0 #TestDF = Data, FixedCovar = FixedCovar, Locations = Locations, Mesh = Mesh) -> Beta0
+      Model %>% INLAFit(., ...) %>% na.omit %>% mean -> Beta0 #TestDF = Data, FixedCovar = FixedCovar, Locations = Locations, Mesh = Mesh) -> Beta0
 
       Ve <- sum(unlist(SigmaList))
 
