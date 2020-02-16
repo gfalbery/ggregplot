@@ -166,7 +166,7 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL,
                      FormulaList = FullFormulaList,
                      FinalFormula = FinalFormula)
 
-  if(AllModels = T){
+  if(AllModels){
 
     ReturnList$AllModels <- AllModelList
 
