@@ -1,4 +1,4 @@
-MultivCovariance <- function(Model){
+MultivCovariance <- function(Model, Return = "Covariance"){
 
   Model$VCV %>% as.data.frame %>% apply(2, function(a){
     a %>% as.mcmc %>% HPDinterval
@@ -26,7 +26,12 @@ MultivCovariance <- function(Model){
     mutate(Keep = as.numeric(Rowname%in%Rows)) ->
     EstimateDF
   EstimateDF %>% filter(Var1 == Var2) -> VarianceDF
+
   EstimateDF %>% filter(Var1 != Var2, Keep == 1) -> CovarianceDF
-  return(CovarianceDF)
+
+  ReturnList <- list(Variance = VarianceDF,
+                     Covariance = CovarianceDF)
+
+  return(ReturnList[[Return]])
 
 }
