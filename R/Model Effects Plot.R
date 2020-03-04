@@ -78,7 +78,7 @@ Efxplot <- function(ModelList, Sig = TRUE,
     geom_errorbar(position=position_dodge(w=0.5), aes(ymin = Lower, ymax = Upper), size=0.3, width=tips)+
     geom_hline(aes(yintercept=0),lty=2) + labs(x=NULL) + coord_flip() +
     theme(legend.position = position) +
-    geom_text(aes(label = Sig, y = starloc), position = position_dodge(w = 0.5))
+    geom_text(aes(label = Sig, y = starloc), position = position_dodge(w = 0.5), show.legend = F)
 
 }
 
