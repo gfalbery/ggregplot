@@ -2,12 +2,14 @@
 
 ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
                     Boundary = NULL, BoundaryWidth = 1,
-                    Points = NULL, PointAlpha = 1, PointColour = "black"){#, xlim, ylim){
+                    Res = 300,
+                    Points = NULL, PointAlpha = 1,
+                    PointColour = "black"){#, xlim, ylim){
 
   require(ggplot2); require(INLA); require(tidyverse)
 
   Projection <- inla.mesh.projector(Mesh,
-                                    dims = c(300, 300))
+                                    dims = c(Res, Res))
 
   Full.Projection <- expand.grid(x = Projection$x, y = Projection$y)
 
