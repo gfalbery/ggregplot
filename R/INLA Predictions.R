@@ -4,7 +4,8 @@
 INLAFit <- function(Model, TestDF,
                     FixedCovar = NULL,
                     Locations = NULL,
-                    Mesh = NULL){
+                    Mesh = NULL,
+                    Draw = F, NDraw = 1){
 
   require(INLA)
 
@@ -15,6 +16,8 @@ INLAFit <- function(Model, TestDF,
   if(length(RandomCovar)>0){
 
     lapply(RandomCovar, function(a){
+
+      TestDF[,a] <- as.factor(TestDF[,a])
 
       model.matrix(as.formula(paste0("~ -1 + ", a)), data = TestDF) -> NewDF
 
@@ -27,16 +30,34 @@ INLAFit <- function(Model, TestDF,
 
     }) %>% bind_cols() %>% as.matrix -> RandomXMatrix
 
-    lapply(1:length(RandomCovar), function(i){
+    if(!Draw){
 
-      FocalEstimates <- RandomEstimates[[RandomCovar[i]]]$mean %>%
-        data.frame() %>% t %>% as.data.frame()
+      lapply(1:length(RandomCovar), function(i){
 
-      names(FocalEstimates) <- paste0(RandomCovar[i], ".", RandomEstimates[[RandomCovar[i]]]$ID)
+        FocalEstimates <- RandomEstimates[[RandomCovar[i]]]$mean %>%
+          data.frame() %>% t %>% as.data.frame()
 
-      return(FocalEstimates)
+        names(FocalEstimates) <- paste0(RandomCovar[i], ".", RandomEstimates[[RandomCovar[i]]]$ID)
 
-    }) %>% bind_cols %>% unlist -> RandomEstimateVector
+        return(FocalEstimates)
+
+      }) %>% bind_cols %>% unlist -> RandomEstimateVector
+
+    }else{
+
+      lapply(1:length(RandomCovar), function(i){
+
+        Model$marginals.random[[RandomCovar[i]]] %>% map_dbl(~inla.rmarginal(NDraw, .x)) ->
+
+          FocalEstimates
+
+        names(FocalEstimates) <- paste0(RandomCovar[i], ".", RandomEstimates[[RandomCovar[i]]]$ID)
+
+        return(FocalEstimates)
+
+      }) %>% unlist -> RandomEstimateVector
+
+    }
 
   }
 
@@ -64,15 +85,37 @@ INLAFit <- function(Model, TestDF,
 
   }
 
+  if(!Draw){
+
+    FixedEstimateVector <- FixedEstimates$mean
+
+    names(FixedEstimateVector) <- rownames(FixedEstimates) %>% str_replace_all("[(]Intercept[)]", "Intercept")
+
+  }else{
+
+    FixedCovar2 <- rownames(FixedEstimates)
+
+    lapply(1:length(FixedCovar2), function(i){
+
+      Model$marginals.fixed[[FixedCovar2[i]]] %>% inla.rmarginal(NDraw, .) ->
+
+        FocalEstimates
+
+    }) %>% unlist -> FixedEstimateVector
+
+    names(FixedEstimateVector) <- FixedCovar2 %>% str_replace_all("[(]Intercept[)]", "Intercept")
+
+  }
+
   # Putting them together
 
   if(length(RandomCovar)>0){
 
     XMatrix <- cbind(FixedXMatrix, RandomXMatrix)
 
-    FixedEstimateVector <- FixedEstimates$mean
-
-    names(FixedEstimateVector) <- rownames(FixedEstimates)
+    SharedNames <-
+      intersect(names(FixedEstimateVector), names(FixedEstimateVector)) %>%
+      intersect(colnames(XMatrix))
 
     EstimateVector <- c(FixedEstimateVector, RandomEstimateVector)[colnames(XMatrix)]
 
@@ -82,13 +125,11 @@ INLAFit <- function(Model, TestDF,
 
     XMatrix <- FixedXMatrix
 
-    FixedEstimateVector <- FixedEstimates$mean
+    SharedNames <- intersect(names(FixedEstimateVector), colnames(XMatrix))
 
-    names(FixedEstimateVector) <- rownames(FixedEstimates)
+    EstimateVector <- c(FixedEstimateVector)[SharedNames]
 
-    EstimateVector <- c(FixedEstimateVector)[colnames(XMatrix)]
-
-    (EstimateVector[colnames(XMatrix)] %*% t(XMatrix)) %>% c ->
+    (EstimateVector[SharedNames] %*% t(XMatrix[,SharedNames])) %>% c ->
 
       Predictions
 

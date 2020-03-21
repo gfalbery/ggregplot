@@ -73,72 +73,87 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL,
 
       Kept <- Add2[which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))]
 
-      print(paste("Keeping", Kept))
-
-      print(Text <- paste("Run", length(DICList)))
-
       ModelList <- FormulaList <- list()
 
       NewExplanatory <- c(NewExplanatory, Add2[which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))])
+
       Add2 <- Add2[-which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))]
-
-      if(Kept %in% unlist(Clashes)){
-
-        ClashRemove <- Clashes[Clashes %>% map_lgl(~Kept %in% .x)] %>% unlist
-
-        Add2 <- Add2 %>% setdiff(ClashRemove)
-
-        "Removing clashes: " %>% paste0(paste0(ClashRemove, collapse = "; ")) %>% print
-
-      }
 
       if(length(Add2)>0){
 
-        for(x in 1:length(Add2)){
+        print(paste("Keeping", Kept))
 
-          "Adding: " %>% paste0(Add2[x]) %>% print
+        print(Text <- paste("Run", length(DICList)))
 
-          Explanatory3 <- paste(c(NewExplanatory, Add2[x]), collapse = " + ")
+        if(Kept %in% unlist(Clashes)){
 
-          if(!is.null(Random)){
+          ClashRemove <- Clashes[Clashes %>% map_lgl(~Kept %in% .x)] %>% unlist
 
-            Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
-            f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+          Add2 <- Add2 %>% setdiff(ClashRemove)
 
-          }else{f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))}
-
-          Model1 <- inla(f2,
-                         family = Family,
-                         data = Data,
-                         control.compute = list(dic = TRUE))
-
-          ModelList[[Add2[x]]] <- Model1
-
-          FormulaList[[Add2[x]]] <- f2
-
-          #print(paste("Adding", Add2[x]))
+          "Removing clashes: " %>% paste0(paste0(ClashRemove, collapse = "; ")) %>% print
 
         }
 
-        AllModelList[[length(AllModelList)+1]] <- ModelList
-        FullFormulaList[[length(FullFormulaList)+1]] <- FormulaList
+        if(length(Add2)>0){
 
-        DICList[[length(DICList)+1]] <- sapply(ModelList, function(y) y$dic$dic)
-        names(DICList[[length(DICList)]]) <- Add2
-        dDICList[[length(dDICList)+1]] <- DICList[[length(DICList)]] - min(DICList[[length(DICList)-1]])
-        names(dDICList[[length(dDICList)]]) <- Add2
+          for(x in 1:length(Add2)){
 
-        RemovedList[[length(RemovedList)+1]] <- Add2
+            "Adding: " %>% paste0(Add2[x]) %>% print
 
+            Explanatory3 <- paste(c(NewExplanatory, Add2[x]), collapse = " + ")
+
+            if(!is.null(Random)){
+
+              Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
+              f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+
+            }else{f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))}
+
+            Model1 <- inla(f2,
+                           family = Family,
+                           data = Data,
+                           control.compute = list(dic = TRUE))
+
+            ModelList[[Add2[x]]] <- Model1
+
+            FormulaList[[Add2[x]]] <- f2
+
+            #print(paste("Adding", Add2[x]))
+
+          }
+
+          AllModelList[[length(AllModelList) + 1]] <- ModelList
+          FullFormulaList[[length(FullFormulaList) + 1]] <- FormulaList
+
+          DICList[[length(DICList) + 1]] <- sapply(ModelList, function(y) y$dic$dic)
+          names(DICList[[length(DICList)]]) <- Add2
+          dDICList[[length(dDICList) + 1]] <- DICList[[length(DICList)]] - min(DICList[[length(DICList)-1]])
+          names(dDICList[[length(dDICList)]]) <- Add2
+
+          RemovedList[[length(RemovedList) + 1]] <- Add2
+
+        }
       }
     }
 
     if(length(dDICList)>0){
 
-      FinalModel <- AllModelList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]] == min(dDICList[[length(dDICList)-1]]))]]
-      FinalFormula <- FullFormulaList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]] == min(dDICList[[length(dDICList)-1]]))]]
+      if(all(last(dDICList)< -Delta)){
 
-      print(paste("Not Keeping ", paste(Add2, collapse = " ")))
+        FinalModel <- AllModelList[[length(AllModelList)]][[1]]
+        FinalFormula <- FullFormulaList[[length(AllModelList)]][[1]]
+
+        print(paste("Keeping Everything!"))
+
+      }else{
+
+        FinalModel <- AllModelList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]] == min(dDICList[[length(dDICList)-1]]))]]
+        FinalFormula <- FullFormulaList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]] == min(dDICList[[length(dDICList)-1]]))]]
+
+        print(paste("Not Keeping ", paste(Add2, collapse = " ")))
+
+      }
 
     }else{
 

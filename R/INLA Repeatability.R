@@ -1,99 +1,242 @@
 # INLA ICC function
 
-INLARep <- function(Model, Family = "gaussian", ...){
+INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, ...){
 
   require(ggregplot); require(INLA)
 
-  SigmaList <- CIList <- list()
+  if(!Draw){
 
-  Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>%
-                        map(1) %in%c("Precision","precision", "size", "Range"))
+    SigmaList <- CIList <- list()
 
-  if(length(Parameters)>0){
+    Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>%
+                          map(1) %in%c("Precision","precision", "size", "Range"))
 
-    HyperPars <- Model$marginals.hyperpar[Parameters]
+    if(length(Parameters)>0){
 
-    Sizes <- names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("size") %>%
-      which()
+      HyperPars <- Model$marginals.hyperpar[Parameters]
 
-    for(x in 1:(length(HyperPars))){
-      tau <- HyperPars[[x]]
+      Sizes <- names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("size") %>%
+        which()
 
-      if(length(Sizes)>0){
-        if(x == Sizes){
+      for(x in 1:(length(HyperPars))){
 
-          sigma <- inla.emarginal(function(x) x, tau)
-          ci <- tau %>% inla.tmarginal(function(a) a, .) %>% inla.hpdmarginal(p = 0.95)
+        tau <- HyperPars[[x]]
+
+        if(length(Sizes)>0){
+
+          if(x == Sizes){
+
+            sigma <- inla.emarginal(function(x) x, tau)
+            ci <- tau %>% inla.tmarginal(function(a) a, .) %>% inla.hpdmarginal(p = 0.95)
+
+          }else{
+
+            sigma <- inla.emarginal(function(x) 1/x, tau)
+            ci <- tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
+
+          }
+
         }else{
 
           sigma <- inla.emarginal(function(x) 1/x, tau)
           ci <- tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
 
         }
-      }else{
 
-        sigma <- inla.emarginal(function(x) 1/x, tau)
-        ci <- tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
+        SigmaList[[x]] <- sigma
+        CIList[[x]] <- ci
+      }
+
+      NameList <- sapply(names(HyperPars), function(a) last(strsplit(a, " ")[[1]]))
+
+      if(length(Sizes)>0){
+        NameList[Sizes] <- "Residual"
+      }
+
+      substr(NameList, 1, 1) <- toupper(substr(NameList, 1, 1))
+
+      if(any(NameList=="Observations")) NameList[NameList=="Observations"] <- "Residual"
+
+      names(SigmaList) <- NameList
+
+      if(any(names(Model$marginals.hyperpar) %>% str_detect("Range"))){
+
+        Var <- names(Model$marginals.hyperpar)[which(names(Model$marginals.hyperpar) %>%
+                                                       str_detect("Range"))]
+
+        Expl <- Var %>% str_split(" ") %>% last %>% last
+
+        i1 = inla.spde.result(Model, Expl, spde)
+        i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.mmarginal()
+
+        SigmaList$SPDE <- i2
+
+        ci <- i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
+        CIList$SPDE <- ci
+
+        CIList[[which(names(SigmaList) == "W")]] <- NULL
+        SigmaList$W <- NULL
 
       }
 
-      SigmaList[[x]] <- sigma
-      CIList[[x]] <- ci
+      if(Family == "binomial"){
+
+        ReturnList <- sapply(SigmaList, function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
+
+        LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
+        UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
+
+      }
+
+      if(Family == "gaussian"){
+
+        ReturnList <- sapply(SigmaList, function(a) a/(sum(unlist(SigmaList))))
+
+        LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(unlist(SigmaList))))
+        UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(unlist(SigmaList))))
+
+      }
+
+      if(Family == "nbinomial"){
+
+        Model %>% INLAFit(., ...) %>% na.omit %>% mean -> Beta0 #TestDF = Data, FixedCovar = FixedCovar, Locations = Locations, Mesh = Mesh) -> Beta0
+
+        Ve <- sum(unlist(SigmaList))
+
+        Expected <- exp(Beta0 + (0.5*(Ve))) #Expected values
+
+        sapply(SigmaList, function(Va){
+
+          (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
+
+        }) -> ReturnList
+
+        sapply(map(CIList, 1), function(Va){
+
+          (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
+
+        }) -> LowerList
+
+        sapply(map(CIList, 2), function(Va){
+
+          (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
+
+        }) -> UpperList
+
+      }
+
+      ReturnDF <- data.frame(
+        Mean = ReturnList,
+        Lower = LowerList,
+        Upper = UpperList
+      )
+
+    }else{
+
+      ReturnDF <- data.frame(Mean = 1,
+                             Lower = 1,
+                             Upper = 1)
+
     }
 
-    NameList <- sapply(names(HyperPars), function(a) last(strsplit(a, " ")[[1]]))
+    return(ReturnDF)
 
-    if(length(Sizes)>0){
-      NameList[Sizes] <- "Residual"
+  }else{
+
+    SigmaList <- CIList <- list()
+
+    Model$marginals.hyperpar %>% names %>% str_detect(c("Precision|precision|size|Range")) %>%
+      names(Model$marginals.hyperpar)[.] ->
+
+      Parameters
+
+    if(length(Parameters)>0){
+
+      HyperPars <- Model$marginals.hyperpar[Parameters]
+
+      Sizes <- names(Model$marginals.hyperpar) %>%
+        str_split(" ") %>% map(1) %in%c("size") %>%
+        which()
+
+      for(x in 1:(length(HyperPars))){
+
+        tau <- HyperPars[[x]]
+
+        if(length(Sizes)>0){
+
+          if(x == Sizes){
+
+            tau %>% inla.rmarginal(NDraw, .) -> Sigma
+
+          }else{
+
+            tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.rmarginal(NDraw, .) -> Sigma
+
+          }
+
+        }else{
+
+          tau %>% inla.tmarginal(function(a) 1/a, .) %>% inla.rmarginal(NDraw, .) -> Sigma
+
+        }
+
+        SigmaList[[x]] <- Sigma
+
+      }
+
+      NameList <- sapply(names(HyperPars), function(a) last(strsplit(a, " ")[[1]]))
+
+      if(length(Sizes)>0){
+
+        NameList[Sizes] <- "Residual"
+
+      }
+
+      substr(NameList, 1, 1) <- toupper(substr(NameList, 1, 1))
+
+      if(any(NameList == "Observations")) NameList[NameList == "Observations"] <- "Residual"
+
+      names(SigmaList) <- NameList
+
+      if(any(Parameters %>% str_detect("Range"))){
+
+        Var <- Parameters[which(names(Model$marginals.hyperpar) %>%
+                                  str_detect("Range"))]
+
+        Expl <- Var %>% str_split(" ") %>% last %>% last
+
+        i1 = inla.spde.result(Model, Expl, spde)
+
+        i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.rmarginal(NDraws, .)
+
+        SigmaList$SPDE <- i2
+
+        SigmaList$W <- NULL
+
+      }
     }
 
-    substr(NameList, 1, 1) <- toupper(substr(NameList, 1, 1))
-
-    if(any(NameList=="Observations")) NameList[NameList=="Observations"] <- "Residual"
-
-    names(SigmaList) <- NameList
-
-    if(any(names(Model$marginals.hyperpar) %>% str_detect("Range"))){
-
-      Var <- names(Model$marginals.hyperpar)[which(names(Model$marginals.hyperpar) %>%
-                                                     str_detect("Range"))]
-
-      Expl <- Var %>% str_split(" ") %>% last %>% last
-
-      i1 = inla.spde.result(Model, Expl, spde)
-      i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.mmarginal()
-
-      SigmaList$SPDE <- i2
-
-      ci <- i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
-      CIList$SPDE <- ci
-
-      CIList[[which(names(SigmaList) == "W")]] <- NULL
-      SigmaList$W <- NULL
-
-    }
+    SigmaList %>% bind_cols -> SigmaDF
 
     if(Family == "binomial"){
 
-      ReturnList <- sapply(SigmaList, function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
+      Denominators <- rowSums(SigmaDF) + pi^(2/3)
 
-      LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
-      UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
+      SigmaList %>% map_dfc(~.x/Denominators) -> VarDF
 
     }
 
     if(Family == "gaussian"){
 
-      ReturnList <- sapply(SigmaList, function(a) a/(sum(unlist(SigmaList))))
+      Denominators <- rowSums(SigmaDF)
 
-      LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(unlist(SigmaList))))
-      UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(unlist(SigmaList))))
+      SigmaList %>% map_dfc(~.x/Denominators) -> VarDF
 
     }
 
     if(Family == "nbinomial"){
 
-      Model %>% INLAFit(., ...) %>% na.omit %>% mean -> Beta0 #TestDF = Data, FixedCovar = FixedCovar, Locations = Locations, Mesh = Mesh) -> Beta0
+      Model %>% INLAFit(., Draw = T, NDraw = NDraw, ...) %>% na.omit %>% mean -> Beta0 #TestDF = Data, FixedCovar = FixedCovar, Locations = Locations, Mesh = Mesh) -> Beta0
 
       Ve <- sum(unlist(SigmaList))
 
@@ -105,35 +248,8 @@ INLARep <- function(Model, Family = "gaussian", ...){
 
       }) -> ReturnList
 
-      sapply(map(CIList, 1), function(Va){
-
-        (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
-
-      }) -> LowerList
-
-      sapply(map(CIList, 2), function(Va){
-
-        (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
-
-      }) -> UpperList
-
     }
-
-    ReturnDF <- data.frame(
-      Mean = ReturnList,
-      Lower = LowerList,
-      Upper = UpperList
-    )
-
-  }else{
-
-    ReturnDF <- data.frame(Mean = 1,
-                           Lower = 1,
-                           Upper = 1)
-
   }
-
-  return(ReturnDF)
 }
 
 INLARepPlot <- function(ModelList,

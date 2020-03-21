@@ -2,7 +2,8 @@
 # Deriving range of autocorrelation figures ####
 
 INLARange <- function(ModelList, MaxRange, MeshList,
-                      ModelNames = NULL, Priors = NULL,
+                      ModelNames = NULL,
+                      Priors = NULL, PriorProbabilities = NULL,
                       Return = "Figure",
                       Resolution = 100){
 
@@ -15,16 +16,22 @@ INLARange <- function(ModelList, MaxRange, MeshList,
   }
 
   if(!class(ModelList)=="list"){
+
     ModelList <- list(ModelList)
+
   }
 
   if(!class(MeshList)=="list"){
+
     MeshList <- list(MeshList)
+
   }
 
   if(length(Priors) == 1) {
 
     Priors <- rep(Priors, length(ModelList))
+
+    PriorProbabilities <- rep(PriorProbabilities, length(ModelList))
 
   }
 
@@ -32,7 +39,7 @@ INLARange <- function(ModelList, MaxRange, MeshList,
     inla.spde2.result(inla = ModelList[[j]],
                       name = "w",
                       spde = inla.spde2.pcmatern(mesh = MeshList[[j]],
-                                                 prior.range = c(Priors[[j]], 0.5),
+                                                 prior.range = c(Priors[[j]], PriorProbabilities[[j]]),
                                                  prior.sigma = c(.5, .5)),
                       do.transfer = TRUE)
   })
