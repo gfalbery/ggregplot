@@ -7,43 +7,30 @@ INLAFit <- function(Model, TestDF,
                     Mesh = NULL,
                     Draw = F, NDraw = 1){
 
-  require(INLA)
+  if(!Draw){
 
-  RandomEstimates <- Model$summary.random
+    require(INLA)
 
-  RandomCovar <- names(RandomEstimates) %>% setdiff("w")
+    RandomEstimates <- Model$summary.random
 
-  if(length(RandomCovar)>0){
+    RandomCovar <- names(RandomEstimates) %>% setdiff("w")
 
-    lapply(RandomCovar, function(a){
+    if(length(RandomCovar)>0){
 
-      TestDF[,a] <- as.factor(TestDF[,a])
+      lapply(RandomCovar, function(a){
 
-      model.matrix(as.formula(paste0("~ -1 + ", a)), data = TestDF) -> NewDF
+        TestDF[,a] <- as.factor(TestDF[,a])
 
-      colnames(NewDF) %>% str_replace_all(a, paste0(a, ".")) ->
-        colnames(NewDF)
+        model.matrix(as.formula(paste0("~ -1 + ", a)), data = TestDF) -> NewDF
 
-      NewDF <- NewDF %>% as.data.frame()
+        colnames(NewDF) %>% str_replace_all(a, paste0(a, ".")) ->
+          colnames(NewDF)
 
-      return(NewDF)
+        NewDF <- NewDF %>% as.data.frame()
 
-    }) %>% bind_cols() %>% as.matrix -> RandomXMatrix
+        return(NewDF)
 
-    if(!Draw){
-
-      lapply(1:length(RandomCovar), function(i){
-
-        FocalEstimates <- RandomEstimates[[RandomCovar[i]]]$mean %>%
-          data.frame() %>% t %>% as.data.frame()
-
-        names(FocalEstimates) <- paste0(RandomCovar[i], ".", RandomEstimates[[RandomCovar[i]]]$ID)
-
-        return(FocalEstimates)
-
-      }) %>% bind_cols %>% unlist -> RandomEstimateVector
-
-    }else{
+      }) %>% bind_cols() %>% as.matrix -> RandomXMatrix
 
       lapply(1:length(RandomCovar), function(i){
 
@@ -59,39 +46,29 @@ INLAFit <- function(Model, TestDF,
 
     }
 
-  }
+    # Fixed effects ####
 
-  # Fixed effects ####
+    FixedEstimates <- Model$summary.fixed
 
-  FixedEstimates <- Model$summary.fixed
+    TestDF$Intercept <- 1
 
-  TestDF$Intercept <- 1
+    if(!is.null(FixedCovar)){
 
-  if(!is.null(FixedCovar)){
+      f1 <- as.formula(paste0("~ 1 +", paste0(FixedCovar, collapse = " + ")))
 
-    f1 <- as.formula(paste0("~ 1 +", paste0(FixedCovar, collapse = " + ")))
+      FixedXMatrix <- model.matrix(f1, data = TestDF) %>% as.matrix
 
-    FixedXMatrix <- model.matrix(f1, data = TestDF) %>% as.matrix
+      colnames(FixedXMatrix)[1] <- "Intercept"
 
-    colnames(FixedXMatrix)[1] <- "Intercept"
+    }else{
 
-  }else{
+      f1 <- as.formula("~ 1")
 
-    f1 <- as.formula("~ 1")
+      FixedXMatrix <- model.matrix(f1, data = TestDF)# %>% as.matrix
 
-    FixedXMatrix <- model.matrix(f1, data = TestDF)# %>% as.matrix
+      colnames(FixedXMatrix)[1] <- "Intercept"
 
-    colnames(FixedXMatrix)[1] <- "Intercept"
-
-  }
-
-  if(!Draw){
-
-    FixedEstimateVector <- FixedEstimates$mean
-
-    names(FixedEstimateVector) <- rownames(FixedEstimates) %>% str_replace_all("[(]Intercept[)]", "Intercept")
-
-  }else{
+    }
 
     FixedCovar2 <- rownames(FixedEstimates)
 
@@ -105,56 +82,199 @@ INLAFit <- function(Model, TestDF,
 
     names(FixedEstimateVector) <- FixedCovar2 %>% str_replace_all("[(]Intercept[)]", "Intercept")
 
-  }
+    # Putting them together
 
-  # Putting them together
+    if(length(RandomCovar)>0){
 
-  if(length(RandomCovar)>0){
+      XMatrix <- cbind(FixedXMatrix, RandomXMatrix)
 
-    XMatrix <- cbind(FixedXMatrix, RandomXMatrix)
+      SharedNames <-
+        intersect(names(FixedEstimateVector), names(FixedEstimateVector)) %>%
+        intersect(colnames(XMatrix))
 
-    SharedNames <-
-      intersect(names(FixedEstimateVector), names(FixedEstimateVector)) %>%
-      intersect(colnames(XMatrix))
+      EstimateVector <- c(FixedEstimateVector, RandomEstimateVector)[colnames(XMatrix)]
 
-    EstimateVector <- c(FixedEstimateVector, RandomEstimateVector)[colnames(XMatrix)]
+      (EstimateVector[colnames(XMatrix)] %*% t(XMatrix)) %>% c -> Predictions
 
-    (EstimateVector[colnames(XMatrix)] %*% t(XMatrix)) %>% c -> Predictions
+    }else{
 
-  }else{
+      XMatrix <- FixedXMatrix
 
-    XMatrix <- FixedXMatrix
+      SharedNames <- intersect(names(FixedEstimateVector), colnames(XMatrix))
 
-    SharedNames <- intersect(names(FixedEstimateVector), colnames(XMatrix))
+      EstimateVector <- c(FixedEstimateVector)[SharedNames]
 
-    EstimateVector <- c(FixedEstimateVector)[SharedNames]
+      (EstimateVector[SharedNames] %*% t(XMatrix[,SharedNames])) %>% c ->
 
-    (EstimateVector[SharedNames] %*% t(XMatrix[,SharedNames])) %>% c ->
-
-      Predictions
-
-  }
-
-  if("w" %in% names(RandomEstimates)){
-
-    if(!class(Locations) == "matrix"){
-
-      Locations <- as.matrix(Locations)
+        Predictions
 
     }
 
-    Projection <- inla.mesh.projector(mesh = Mesh, loc = Locations, dims = c(300, 300))
+    if("w" %in% names(RandomEstimates)){
 
-    WPredictions <- c(inla.mesh.project(Projection, Model$summary.random$w$mean))
+      if(!class(Locations) == "matrix"){
 
-    FullPredictions <- Predictions + WPredictions
+        Locations <- as.matrix(Locations)
+
+      }
+
+      Projection <- inla.mesh.projector(mesh = Mesh, loc = Locations, dims = c(300, 300))
+
+      WPredictions <- c(inla.mesh.project(Projection, Model$summary.random$w$mean))
+
+      FullPredictions <- Predictions + WPredictions
+
+    }else{
+
+      FullPredictions <- Predictions
+
+    }
+
+    FullPredictions %>% return
 
   }else{
 
-    FullPredictions <- Predictions
+    RandomEstimates <- Model$summary.random
+
+    RandomCovar <- names(RandomEstimates) %>% setdiff("w")
+
+    if(length(RandomCovar)>0){
+
+      lapply(RandomCovar, function(a){
+
+        TestDF[,a] <- as.factor(TestDF[,a])
+
+        model.matrix(as.formula(paste0("~ -1 + ", a)), data = TestDF) -> NewDF
+
+        colnames(NewDF) %>% str_replace_all(a, paste0(a, ".")) ->
+          colnames(NewDF)
+
+        NewDF <- NewDF %>% as.data.frame()
+
+        return(NewDF)
+
+      }) %>% bind_cols() %>% as.matrix -> RandomXMatrix
+
+      1:length(RandomCovar) %>% map_dfc(function(i){
+
+        Model$marginals.random[[RandomCovar[i]]] %>% map(~inla.rmarginal(NDraw, .x)) ->
+
+          FocalEstimates
+
+        names(FocalEstimates) <- paste0(RandomCovar[i], ".", RandomEstimates[[RandomCovar[i]]]$ID)
+
+        return(FocalEstimates)
+
+      }) %>% as.data.frame() -> RandomEstimateDF
+
+    }
+
+    # Fixed effects ####
+
+    FixedEstimates <- Model$summary.fixed
+
+    TestDF$Intercept <- 1
+
+    if(!is.null(FixedCovar)){
+
+      f1 <- as.formula(paste0("~ 1 +", paste0(FixedCovar, collapse = " + ")))
+
+      FixedXMatrix <- model.matrix(f1, data = TestDF) %>% as.matrix
+
+      colnames(FixedXMatrix)[1] <- "Intercept"
+
+    }else{
+
+      f1 <- as.formula("~ 1")
+
+      FixedXMatrix <- model.matrix(f1, data = TestDF)# %>% as.matrix
+
+      colnames(FixedXMatrix)[1] <- "Intercept"
+
+    }
+
+    FixedCovar2 <- rownames(FixedEstimates)
+
+    1:length(FixedCovar2) %>% map_dfc(function(i){
+
+      Model$marginals.fixed[[FixedCovar2[i]]] %>% inla.rmarginal(NDraw, .) ->
+
+        FocalEstimates
+
+      names(FocalEstimates) <- paste0("Draw.", 1:NDraw)
+
+      FocalEstimates %>% return
+
+    }) %>% as.data.frame() -> FixedEstimateDF
+
+    names(FixedEstimateDF) <- FixedCovar2 %>% str_replace_all("[(]Intercept[)]", "Intercept")
+
+    # Putting them together
+
+    if(length(RandomCovar)>0){
+
+      XMatrix <- cbind(FixedXMatrix, RandomXMatrix)
+
+      SharedNames <-
+        c(names(FixedEstimateDF), names(RandomEstimateDF)) %>%
+        intersect(colnames(XMatrix))
+
+      1:NDraw %>% map(~{
+
+        EstimateVector <- bind_cols(FixedEstimateDF, RandomEstimateDF)[.x, SharedNames] %>% unlist
+
+        (EstimateVector %*% t(XMatrix[,SharedNames])) %>% c -> Predictions
+
+        return(Predictions)
+
+      }) -> PredictionList
+
+    }else{
+
+      XMatrix <- FixedXMatrix
+
+      SharedNames <- intersect(names(FixedEstimateDF), colnames(XMatrix))
+
+      1:NDraw %>% map(~{
+
+        EstimateVector <- FixedEstimateDF[.x, SharedNames] %>% unlist
+
+        (EstimateVector %*% t(XMatrix[,SharedNames])) %>% c -> Predictions
+
+        return(Predictions)
+
+      }) -> PredictionList
+    }
+
+    if("w" %in% names(RandomEstimates)){
+
+      if(!class(Locations) == "matrix"){
+
+        Locations <- as.matrix(Locations)
+
+      }
+
+      Projection <- inla.mesh.projector(mesh = Mesh, loc = Locations, dims = c(300, 300))
+
+      Model$marginals.random$w %>% map(~inla.rmarginal(NDraw, .x)) -> WList
+
+      1:NDraw %>% map(~{
+
+        WPredictions <- c(inla.mesh.project(Projection, WList[[.x]]))
+
+        FullPredictions <- PredictionList[[.x]] + WPredictions
+
+        return(Predictions)
+
+      }) -> FullPredictionList
+
+    }else{
+
+      FullPredictionList <- PredictionList
+
+    }
+
+    FullPredictionList %>% return
 
   }
-
-  FullPredictions %>% return
-
 }
