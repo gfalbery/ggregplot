@@ -260,11 +260,11 @@ INLAFit <- function(Model, TestDF,
 
       1:NDraw %>% map(~{
 
-        WPredictions <- c(inla.mesh.project(Projection, WList[[.x]]))
+        WPredictions <- c(inla.mesh.project(Projection, WList %>% map_dbl(.x)))
 
         FullPredictions <- PredictionList[[.x]] + WPredictions
 
-        return(Predictions)
+        return(FullPredictions)
 
       }) -> FullPredictionList
 

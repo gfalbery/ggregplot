@@ -1,6 +1,6 @@
 # INLA ICC function
 
-INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, ...){
+INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "Raw", ...){
 
   require(ggregplot); require(INLA)
 
@@ -207,7 +207,7 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, ...){
 
         i1 = inla.spde.result(Model, Expl, spde)
 
-        i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.rmarginal(NDraws, .)
+        i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.rmarginal(NDraw, .)
 
         SigmaList$SPDE <- i2
 
@@ -222,7 +222,7 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, ...){
 
       Denominators <- rowSums(SigmaDF) + pi^(2/3)
 
-      SigmaList %>% map_dfc(~.x/Denominators) -> VarDF
+      SigmaList %>% map_dfc(~.x/Denominators) -> ReturnDF
 
     }
 
@@ -230,23 +230,39 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, ...){
 
       Denominators <- rowSums(SigmaDF)
 
-      SigmaList %>% map_dfc(~.x/Denominators) -> VarDF
+      SigmaList %>% map_dfc(~.x/Denominators) -> ReturnDF
 
     }
 
     if(Family == "nbinomial"){
 
-      Model %>% INLAFit(., Draw = T, NDraw = NDraw, ...) %>% na.omit %>% mean -> Beta0 #TestDF = Data, FixedCovar = FixedCovar, Locations = Locations, Mesh = Mesh) -> Beta0
+      Model %>% INLAFit(., Draw = T, NDraw = NDraw, ...) -> Beta0
 
-      Ve <- sum(unlist(SigmaList))
+      Beta0 %>% map_dbl(~.x %>% na.omit %>% mean) -> Beta0
+
+      Ve <- SigmaDF %>% rowSums
 
       Expected <- exp(Beta0 + (0.5*(Ve))) #Expected values
 
-      sapply(SigmaList, function(Va){
+      SigmaDF %>% apply(2, function(Va){
 
         (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
 
-      }) -> ReturnList
+      }) -> ReturnDF
+    }
+
+    if(Return == "Raw") return(ReturnDF) else{
+
+      ReturnDF %>% as.data.frame %>% gather("Component") %>% na.omit %>%
+
+        group_by(Component) %>%
+        summarise(Mean = posterior.mode(as.mcmc(value)),
+                  Lower = HPDinterval(as.mcmc(value))[1],
+                  Upper = HPDinterval(as.mcmc(value))[2]) %>%
+
+        as.data.frame() -> SummaryDF
+
+      return(SummaryDF)
 
     }
   }
