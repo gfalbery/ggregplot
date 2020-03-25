@@ -1,6 +1,7 @@
 # ggplot for INLA fields ####
 
-ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
+ggField <- function(Model, Mesh, Groups = 1,
+                    Fill = "Discrete", FillAlpha = F,
                     Boundary = NULL, BoundaryWidth = 1,
                     Res = 300,
                     Points = NULL, PointAlpha = 1,
@@ -54,11 +55,23 @@ ggField <- function(Model, Mesh, Groups = 1, Fill = "Discrete",
     FieldPlot <- FieldPlot + geom_polygon(data = Boundary, fill = "white")
   }
 
-  FieldPlot <- FieldPlot +
-    geom_tile(colour = "black") +
-    geom_tile(colour = NA, aes(fill = Fill)) +
-    coord_fixed() + labs(fill = "Mean") +
-    labs(x = "Easting", y = "Northing")
+  if(!FillAlpha){
+
+    FieldPlot <- FieldPlot +
+      # geom_tile(colour = "black") +
+      geom_tile(colour = NA, aes(fill = Fill)) +
+      coord_fixed() + labs(fill = "Mean") +
+      labs(x = "Easting", y = "Northing")
+
+  }else{
+
+    FieldPlot <- FieldPlot +
+      #geom_tile(colour = "black") +
+      geom_tile(colour = NA, aes(fill = Fill, alpha = Fill)) +
+      coord_fixed() + labs(fill = "Mean") +
+      labs(x = "Easting", y = "Northing")
+
+  }
 
   if(Fill == "Discrete"){
 
