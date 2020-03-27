@@ -1,23 +1,20 @@
 
-# Generates all possible combinations of a set of covariates ####
+# Generates all possible combinations of a set of Covariates ####
 
-FormulaGen <- function(Response, covar){
-  
-  unlist(lapply(length(covar):0, function(x){
-    
-    formuladf <- as.data.frame(combn(covar,x))
-    
-    if(x>0){
-      unlist(lapply(formuladf, function(y) as.formula(paste(Response, " ~ ", paste(y, collapse = " + "), " + ", 
-                                                            ifelse(Response %in% c("ScaleTotA","ScaleTcA","lEPG"), 
-                                                                   paste(c("Autumn","Spring","Age","Year2016", "Year2017"), collapse = " + "), 
-                                                                   paste(c("Age","Year2016","Year2017"), collapse = " + "))))))
-    }else{
-      as.formula(ifelse(Response %in% c("ScaleTotA","ScaleTcA","lEPG"), 
-             paste0(Response," ~ Age + Autumn + Spring + Year2016 + Year2017"),
-             paste0(Response," ~ Age + Year2016 + Year2017")))
-    }
-  }
-  ))
+FormulaGen <- function(Response, Covar, InterceptOnly = T){
+
+  1:length(Covar) %>%
+    map(~combn(Covar, .x) %>% apply(2, list) %>% unlist(recursive = F)) %>%
+    unlist(recursive = F) ->
+
+    CovarList
+
+  CovarList %>% map(~paste0(Response, " ~ ", paste(.x, collapse = " + ")) %>% as.formula) -> FormulaList
+
+  if(InterceptOnly) FormulaList %>% append(paste0(Response, " ~ 1") %>% as.formula %>% list, .) -> FormulaList
+
+  return(FormulaList)
+
 }
+
 
