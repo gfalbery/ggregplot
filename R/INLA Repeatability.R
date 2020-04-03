@@ -66,7 +66,7 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "R
 
         Expl <- Var %>% str_split(" ") %>% last %>% last
 
-        i1 = inla.spde.result(Model, Expl, spde)
+        i1 = inla.spde.result(Model, Expl, SPDEModel)
         i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.mmarginal()
 
         SigmaList$SPDE <- i2
@@ -205,7 +205,7 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "R
 
         Expl <- Var %>% str_split(" ") %>% last %>% last
 
-        i1 = inla.spde.result(Model, Expl, spde)
+        i1 = inla.spde.result(Model, Expl, SPDEModel)
 
         i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.rmarginal(NDraw, .)
 

@@ -4,7 +4,7 @@
 INLAFit <- function(Model, TestDF,
                     FixedCovar = NULL,
                     Locations = NULL,
-                    Mesh = NULL,
+                    Mesh = NULL, SPDEModel = NULL,
                     Draw = F, NDraw = 1){
 
   if(!Draw){
