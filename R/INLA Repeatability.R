@@ -1,6 +1,6 @@
 # INLA ICC function
 
-INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "Raw", ...){
+INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "Raw", SPDEModel = NULL, ...){
 
   require(ggregplot); require(INLA)
 
