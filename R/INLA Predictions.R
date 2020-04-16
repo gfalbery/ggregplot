@@ -219,13 +219,17 @@ INLAFit <- function(Model, TestDF,
         c(names(FixedEstimateDF), names(RandomEstimateDF)) %>%
         intersect(colnames(XMatrix))
 
+      EstimateDF <- bind_cols(FixedEstimateDF, RandomEstimateDF)[,SharedNames]
+
+      EstimateDF %>% apply(1, function(a) list(a)) %>% map(1) -> EstimateList
+
+      XMatrix <- XMatrix[,SharedNames]
+
+      TMatrix <- t(XMatrix)
+
       1:NDraw %>% map(~{
 
-        EstimateVector <- bind_cols(FixedEstimateDF, RandomEstimateDF)[.x, SharedNames] %>% unlist
-
-        (EstimateVector %*% t(XMatrix[,SharedNames])) %>% c -> Predictions
-
-        return(Predictions)
+        EstimateList[[.x]] %*% TMatrix
 
       }) -> PredictionList
 
@@ -235,15 +239,18 @@ INLAFit <- function(Model, TestDF,
 
       SharedNames <- intersect(names(FixedEstimateDF), colnames(XMatrix))
 
+      FixedEstimateDF %>% apply(1, function(a) list(a)) %>% map(1) -> EstimateList
+
+      XMatrix <- XMatrix[,SharedNames]
+
+      TMatrix <- t(XMatrix)
+
       1:NDraw %>% map(~{
 
-        EstimateVector <- FixedEstimateDF[.x, SharedNames] %>% unlist
-
-        (EstimateVector %*% t(XMatrix[,SharedNames])) %>% c -> Predictions
-
-        return(Predictions)
+        EstimateList[[.x]] %*% TMatrix
 
       }) -> PredictionList
+
     }
 
     if("w" %in% names(RandomEstimates)){
