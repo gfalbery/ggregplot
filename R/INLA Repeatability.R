@@ -207,9 +207,12 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "R
 
         i1 = inla.spde.result(Model, Expl, SPDEModel)
 
-        i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.rmarginal(NDraw, .)
+        i2a = i1$marginals.tau[[1]] %>% #inla.tmarginal(function(a) 1/a, .) %>%
+          inla.rmarginal(NDraw, .)
 
-        SigmaList$SPDE <- i2
+        i2b = i1$marginals.variance.nominal[[1]] %>% inla.rmarginal(NDraw, .)
+
+        SigmaList$SPDE <- i2b
 
         SigmaList$W <- NULL
 
