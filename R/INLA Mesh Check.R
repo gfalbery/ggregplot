@@ -1,43 +1,52 @@
 
 # INLA Mesh Check ####
 
-Mesh <- MeshList[[1]]
+GetMesh <- function(Mesh){
 
-Mesh %>% plot
+  Mesh$loc %>% as.data.frame() %>% rename(X = V1, Y = V2) %>% mutate(Vertex = 1:n()) -> Vertices
 
-"meta"     "manifold" "n"        "loc"      "graph"    "segm"     "idx"      "crs"
+  Mesh$graph$vv %>% as.matrix %>% reshape2::melt() %>%
+    filter(value == 1) %>% mutate(Group = 1:n()) %>% dplyr::select(-value) -> Edges
 
-Mesh[[1]]
+  Edges %>% gather("RowCol", "Vertex", -Group) -> LongEdges
 
-Mesh[[5]][[3]]
+  LongEdges %>% left_join(Vertices, by = c("Vertex")) -> LongEdges
 
-Mesh$loc %>% as.data.frame() %>% rename(X = V1, Y = V2) %>% mutate(Vertex = 1:n()) -> Vertices
+  return(
 
-Vertices %>%
-  ggplot(aes(X, Y)) + geom_point() + geom_text(aes(label = Vertex))
+    list(
 
-Mesh$n
+      Vertices = Vertices,
 
-max(Vertices$Vertex)
+      Edges = LongEdges
 
-Mesh$graph %>% names
+    )
 
-Mesh$graph$vv %>% as.matrix %>% reshape2::melt() %>%
-  filter(value == 1) %>% mutate(Group = 1:n()) %>% dplyr::select(-value) -> Edges
+  )
 
-Edges %>% gather("RowCol", "Vertex", -Group) -> LongEdges
+}
 
-LongEdges %>% left_join(Vertices, by = c("Vertex")) -> LongEdges
+ggMesh <- function(Mesh, Include = c("Edges")){
 
-LongEdges$Group %>% table() %>% table()
+  GotMesh <- GetMesh(Mesh)
 
-Vertices %>%
-  ggplot(aes(X, Y)) +
-  #geom_point() +
-  #geom_polygon(data = LongEdges, aes(group = Group), fill = NA) +
-  geom_path(data = LongEdges, aes(group = Group)) +
-  coord_fixed()
+  MeshPlot <- GotMesh$Vertices %>%
+    ggplot(aes(X, Y)) +
+    coord_fixed()
 
+  if("Edges" %in% Include){
 
+    MeshPlot <- MeshPlot +
+      geom_path(data = GotMesh$LongEdges, aes(group = Group))
 
+  }
 
+  if("Vertices" %in% Include){
+
+    MeshPlot <- MeshPlot +
+      geom_point()
+
+  }
+}
+
+GetMesh(Mesh)
