@@ -5,10 +5,10 @@ GetMesh <- function(Mesh){
 
   Mesh$loc %>% as.data.frame() %>% rename(X = V1, Y = V2) %>% mutate(Vertex = 1:n()) -> Vertices
 
-  Mesh$graph$vv %>% as.matrix %>% reshape2::melt() %>%
+  Mesh$graph$vv %>% as.matrix %>% reshape2::melt() %>% rename(From = Var1, To = Var2) %>%
     filter(value == 1) %>% mutate(Group = 1:n()) %>% dplyr::select(-value) -> Edges
 
-  Edges %>% gather("RowCol", "Vertex", -Group) -> LongEdges
+  Edges %>% gather("ToFrom", "Vertex", -Group) -> LongEdges
 
   LongEdges %>% left_join(Vertices, by = c("Vertex")) -> LongEdges
 
@@ -37,7 +37,7 @@ ggMesh <- function(Mesh, Include = c("Edges")){
   if("Edges" %in% Include){
 
     MeshPlot <- MeshPlot +
-      geom_path(data = GotMesh$LongEdges, aes(group = Group))
+      geom_path(data = GotMesh$Edges, aes(group = Group))
 
   }
 
@@ -47,6 +47,9 @@ ggMesh <- function(Mesh, Include = c("Edges")){
       geom_point()
 
   }
+
+  return(MeshPlot)
+
 }
 
-GetMesh(Mesh)
+ggMesh(Mesh)
