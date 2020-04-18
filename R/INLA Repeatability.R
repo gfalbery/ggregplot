@@ -239,9 +239,9 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "R
 
     if(Family == "nbinomial"){
 
-      Model %>% INLAFit(., Draw = T, NDraw = NDraw, ...) -> Beta0
+      Model %>% INLAFit(., Draw = T, NDraw = NDraw, ...) -> Beta01
 
-      Beta0 %>% map_dbl(~.x %>% na.omit %>% mean) -> Beta0
+      Beta01 %>% map_dbl(~.x %>% c %>% na.omit %>% mean) -> Beta0
 
       Ve <- SigmaDF %>% rowSums
 

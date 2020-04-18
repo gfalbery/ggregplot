@@ -239,7 +239,7 @@ INLAFit <- function(Model, TestDF,
 
       SharedNames <- intersect(names(FixedEstimateDF), colnames(XMatrix))
 
-      FixedEstimateDF %>% apply(1, function(a) list(a)) %>% map(1) -> EstimateList
+      FixedEstimateDF[,SharedNames] %>% apply(1, function(a) list(a)) %>% map(1) -> EstimateList
 
       XMatrix <- XMatrix[,SharedNames]
 
