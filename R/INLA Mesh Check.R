@@ -63,73 +63,31 @@ ggMesh <- function(Mesh, Include = c("Edges"), Alpha = 1){
 
 }
 
-ggMesh(Mesh)
+CheckMeshBoundaries <- function(Locations,
+                                Mesh, Range,
+                                HullColour = "black",
+                                PointColour = "black",
+                                ...){
 
+  Locations %>% chull -> Hull
 
-
-Vertices[,c("X", "Y")] %>% SpatialPointsDataFrame(data = ., coords = .) %>% st_as_sf()
-
-Vertices[,c("X", "Y")] %>% chull -> Hull
-
-Vertices[Hull,] -> Hull
-
-Hull %>% dplyr::select(-c(X, Y, V3)) -> HullVertexNames
-
-HullVertexNames %>% SpatialPointsDataFrame(data = ., coords = Hull[,c("X", "Y")]) %>% plot
-
-Hull[,c("X", "Y")] %>% Polygon %>% list %>%
-  Polygons(ID = '0') %>%
-  list %>% SpatialPolygons -> Outline
-
-plot(Outline)
-
-Range <- 0.2
-
-Outline %>% st_as_sf %>% st_buffer(Range) %>% plot
-
-Hull[,c("X", "Y")] %>% slice(n():1) %>%
-  Polygon(hole = T) %>% list %>%
-  Polygons(ID = '0') %>%
-  list %>% SpatialPolygons -> Outline
-
-plot(Outline)
-
-Range <- 0.2
-
-Outline %>% st_as_sf %>% st_buffer(Range) %>% plot
-
-
-CheckMeshBoundaries <- function(TestDf, Mesh, Range, HullColour = "black", ...){
-
-  TestDF %>% chull -> Hull
-
-  TestDF[Hull,] -> Hull
+  Locations[Hull,] -> Hull
 
   Hull[,c("X", "Y")] %>%
     Polygon() %>% list %>%
     Polygons(ID = '0') %>%
-    list %>% SpatialPolygons ->
+    list %>% SpatialPolygons %>%
+    st_as_sf %>% st_buffer(Range) -> Buffered
 
-    Outline
+  # How is this the easiest way to do this ####
 
-  Outline %>% st_as_sf %>% st_buffer(Range) -> Buffered
   Buffered$geometry[[1]][[1]] %>% as.data.frame() %>% rename(X = V1, Y = V2) -> BufferedDF
 
   MeshPlot <- ggMesh(Mesh, ...)
 
   MeshPlot +
     geom_path(data = BufferedDF, inherit.aes = F, aes(X, Y), colour = HullColour) +
-    geom_point(data = TestDF, inherit.aes = F, aes(X, Y))
-
-  # Mesh bit ####
-
-  GotMesh <- GetMesh(Mesh, ...)
-
-  GotMesh$Vertices[,c("X", "Y")]
-
-    geom_polygon() +
-    geom_path(data = BufferedDF, inherit.aes = F, aes(X, Y), colour = HullColour) +
-    geom_point(data = TestDF, inherit.aes = F, aes(X, Y))
+    geom_point(data = Locations, inherit.aes = F, aes(X, Y))
 
 }
 
