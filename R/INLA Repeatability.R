@@ -1,6 +1,10 @@
 # INLA ICC function
 
-INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "Raw", SPDEModel = NULL, ...){
+INLARep <- function(Model, Family = "gaussian",
+                    Draw = F, NDraw = 1,
+                    Return = "Raw",
+                    SPDEComponent = "Variance",
+                    SPDEModel = NULL, ...){
 
   require(ggregplot); require(INLA)
 
@@ -67,14 +71,18 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "R
         Expl <- Var %>% str_split(" ") %>% last %>% last
 
         i1 = inla.spde.result(Model, Expl, SPDEModel)
-        i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.mmarginal()
+
+        if(SPDEComponent == "Tau"){
+
+          i2 = i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.mmarginal()
+
+        }else if(SPDEComponent == "Variance"){
+
+          i2 = i1$marginals.variance.nominal[[1]] %>% inla.mmarginal()
+
+        }
 
         SigmaList$SPDE <- i2
-
-        ci <- i1$marginals.tau[[1]] %>% inla.tmarginal(function(a) 1/a, .) %>% inla.hpdmarginal(p = 0.95)
-        CIList$SPDE <- ci
-
-        CIList[[which(names(SigmaList) == "W")]] <- NULL
         SigmaList$W <- NULL
 
       }
@@ -83,17 +91,11 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "R
 
         ReturnList <- sapply(SigmaList, function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
 
-        LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
-        UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(sapply(SigmaList, function(b) b))+pi^(2/3)))
-
       }
 
       if(Family == "gaussian"){
 
         ReturnList <- sapply(SigmaList, function(a) a/(sum(unlist(SigmaList))))
-
-        LowerList <- sapply(map(CIList, 1), function(a) (a)/c(sum(unlist(SigmaList))))
-        UpperList <- sapply(map(CIList, 2), function(a) (a)/c(sum(unlist(SigmaList))))
 
       }
 
@@ -111,31 +113,15 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "R
 
         }) -> ReturnList
 
-        sapply(map(CIList, 1), function(Va){
-
-          (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
-
-        }) -> LowerList
-
-        sapply(map(CIList, 2), function(Va){
-
-          (Expected*(exp(Va)-1))/(Expected*(exp(Ve)-1)+1)
-
-        }) -> UpperList
-
       }
 
       ReturnDF <- data.frame(
-        Mean = ReturnList,
-        Lower = LowerList,
-        Upper = UpperList
+        Mean = ReturnList
       )
 
     }else{
 
-      ReturnDF <- data.frame(Mean = 1,
-                             Lower = 1,
-                             Upper = 1)
+      ReturnDF <- data.frame(Mean = 1)
 
     }
 
@@ -145,7 +131,8 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "R
 
     SigmaList <- CIList <- list()
 
-    Model$marginals.hyperpar %>% names %>% str_detect(c("Precision|precision|size|Range")) %>%
+    Model$marginals.hyperpar %>% names %>%
+      str_detect(c("Precision|precision|size|Range")) %>%
       names(Model$marginals.hyperpar)[.] ->
 
       Parameters
@@ -207,12 +194,22 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "R
 
         i1 = inla.spde.result(Model, Expl, SPDEModel)
 
-        i2a = i1$marginals.tau[[1]] %>% #inla.tmarginal(function(a) 1/a, .) %>%
-          inla.rmarginal(NDraw, .)
+        if(SPDEComponent == "Tau"){
 
-        i2b = i1$marginals.variance.nominal[[1]] %>% inla.rmarginal(NDraw, .)
+          i2 = i1$marginals.tau[[1]] %>%
+            inla.tmarginal(function(a) 1/a, .) %>%
+            inla.rmarginal(NDraw, .)
 
-        SigmaList$SPDE <- i2b
+        }
+
+        if(SPDEComponent == "Variance"){
+
+          i2 = i1$marginals.variance.nominal[[1]] %>%
+            inla.rmarginal(NDraw, .)
+
+        }
+
+        SigmaList$SPDE <- i2
 
         SigmaList$W <- NULL
 
@@ -239,9 +236,13 @@ INLARep <- function(Model, Family = "gaussian", Draw = F, NDraw = 1, Return = "R
 
     if(Family == "nbinomial"){
 
-      Model %>% INLAFit(., Draw = T, NDraw = NDraw, ...) -> Beta01
+      Model %>% INLAFit(., Draw = T, NDraw = NDraw, ...) ->
 
-      Beta01 %>% map_dbl(~.x %>% c %>% na.omit %>% mean) -> Beta0
+        Beta01
+
+      Beta01 %>% map_dbl(~.x %>% c %>% na.omit %>% mean) ->
+
+        Beta0
 
       Ve <- SigmaDF %>% rowSums
 
