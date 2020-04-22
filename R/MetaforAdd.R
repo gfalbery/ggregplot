@@ -1,13 +1,6 @@
 
 # Meta-Analysis Model Addition Code ####
 
-
-Response = "yi"
-Errors = "vi"
-Explanatory = 1
-Add = Covar
-Data = TestDF
-
 MetaforAdd <- function(Response, Errors,
                        Explanatory,
                        Add, Random = NULL,
