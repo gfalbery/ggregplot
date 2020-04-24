@@ -3,9 +3,27 @@
 
 INLAFit <- function(Model, TestDF,
                     FixedCovar = NULL,
+                    HoldFixed = NULL,
+                    HoldRandom = NULL,
                     Locations = NULL,
                     Mesh = NULL, SPDEModel = NULL,
-                    Draw = F, NDraw = 1){
+                    Draw = F, NDraw = 1,
+                    Return = "Vector"){
+
+  if(!is.null(HoldFixed)){
+
+    TestDF %>% dplyr::select(vars(is.numeric)) %>%
+      names %>% intersect(HoldFixed) ->
+
+      HoldFixedNumeric
+
+    TestDf %>% mutate_at(HoldFixedNumeric, mean) ->
+
+      TestDF
+
+    HoldFixedNumeric %>% setdiff(HoldFixed, .) -> HoldFixedCategorical
+
+  }
 
   if(!Draw){
 
@@ -34,9 +52,15 @@ INLAFit <- function(Model, TestDF,
 
       lapply(1:length(RandomCovar), function(i){
 
-        Model$marginals.random[[RandomCovar[i]]] %>% map_dbl(~inla.rmarginal(NDraw, .x)) ->
+        RandomEstimates[[RandomCovar[i]]]$mean ->
 
           FocalEstimates
+
+        if(RandomCovar[i] %in% HoldRandom){
+
+          FocalEstimates[] <- mean(FocalEstimates)
+
+        }
 
         names(FocalEstimates) <- paste0(RandomCovar[i], ".", RandomEstimates[[RandomCovar[i]]]$ID)
 
@@ -72,13 +96,7 @@ INLAFit <- function(Model, TestDF,
 
     FixedCovar2 <- rownames(FixedEstimates)
 
-    lapply(1:length(FixedCovar2), function(i){
-
-      Model$marginals.fixed[[FixedCovar2[i]]] %>% inla.rmarginal(NDraw, .) ->
-
-        FocalEstimates
-
-    }) %>% unlist -> FixedEstimateVector
+    FixedEstimates$mean %>% unlist -> FixedEstimateVector
 
     names(FixedEstimateVector) <- FixedCovar2 %>% str_replace_all("[(]Intercept[)]", "Intercept")
 
@@ -94,7 +112,15 @@ INLAFit <- function(Model, TestDF,
 
       EstimateVector <- c(FixedEstimateVector, RandomEstimateVector)[colnames(XMatrix)]
 
-      (EstimateVector[colnames(XMatrix)] %*% t(XMatrix)) %>% c -> Predictions
+      if(Return == "Vector"){
+
+        (EstimateVector[colnames(XMatrix)] %*% t(XMatrix)) %>% c -> Predictions
+
+      }else{
+
+        (EstimateVector[colnames(XMatrix)] * t(XMatrix)) %>% t -> Predictions
+
+      }
 
     }else{
 
@@ -104,10 +130,19 @@ INLAFit <- function(Model, TestDF,
 
       EstimateVector <- c(FixedEstimateVector)[SharedNames]
 
-      (EstimateVector[SharedNames] %*% t(XMatrix[,SharedNames])) %>% c ->
+      if(Return == "Vector"){
 
-        Predictions
+        (EstimateVector[SharedNames] %*% t(XMatrix[,SharedNames])) %>% c ->
 
+          Predictions
+
+      }else{
+
+        (EstimateVector[SharedNames] * t(XMatrix[,SharedNames])) %>% t ->
+
+          Predictions
+
+      }
     }
 
     if("w" %in% names(RandomEstimates)){
@@ -122,7 +157,17 @@ INLAFit <- function(Model, TestDF,
 
       WPredictions <- c(inla.mesh.project(Projection, Model$summary.random$w$mean))
 
-      FullPredictions <- Predictions + WPredictions
+      if(Return == "Vector"){
+
+        FullPredictions <- Predictions + WPredictions
+
+      }else{
+
+        FullPredictions <- Predictions %>%
+          as.data.frame %>% mutate(W = WPredictions) %>%
+          as.matrix
+
+      }
 
     }else{
 
@@ -227,11 +272,23 @@ INLAFit <- function(Model, TestDF,
 
       TMatrix <- t(XMatrix)
 
-      1:NDraw %>% map(~{
+      if(Return == "Vector"){
 
-        EstimateList[[.x]] %*% TMatrix
+        1:NDraw %>% map(~{
 
-      }) -> PredictionList
+          EstimateList[[.x]] %*% TMatrix
+
+        }) -> PredictionList
+
+      }else{
+
+        1:NDraw %>% map(~{
+
+          EstimateList[[.x]] * TXMatrix %>% t
+
+        }) -> PredictionList
+
+      }
 
     }else{
 
@@ -245,11 +302,23 @@ INLAFit <- function(Model, TestDF,
 
       TMatrix <- t(XMatrix)
 
-      1:NDraw %>% map(~{
+      if(Return == "Vector"){
 
-        EstimateList[[.x]] %*% TMatrix
+        1:NDraw %>% map(~{
 
-      }) -> PredictionList
+          EstimateList[[.x]] %*% TMatrix
+
+        }) -> PredictionList
+
+      }else{
+
+        1:NDraw %>% map(~{
+
+          EstimateList[[.x]] * TMatrix %>% t
+
+        }) -> PredictionList
+
+      }
 
     }
 
@@ -265,15 +334,33 @@ INLAFit <- function(Model, TestDF,
 
       Model$marginals.random$w %>% map(~inla.rmarginal(NDraw, .x)) -> WList
 
-      1:NDraw %>% map(~{
+      if(Return == "Vector"){
 
-        WPredictions <- c(inla.mesh.project(Projection, WList %>% map_dbl(.x)))
+        1:NDraw %>% map(~{
 
-        FullPredictions <- PredictionList[[.x]] + WPredictions
+          WPredictions <- c(inla.mesh.project(Projection, WList %>% map_dbl(.x)))
 
-        return(FullPredictions)
+          FullPredictions <- PredictionList[[.x]] + WPredictions
 
-      }) -> FullPredictionList
+          return(FullPredictions)
+
+        }) -> FullPredictionList
+
+      }else{
+
+        1:NDraw %>% map(~{
+
+          WPredictions <- c(inla.mesh.project(Projection, WList %>% map_dbl(.x)))
+
+          FullPredictions <- PredictionList[[.x]] %>%
+            as.data.frame %>% mutate(W = WPredictions) %>%
+            as.matrix
+
+          return(FullPredictions)
+
+        }) -> FullPredictionList
+
+      }
 
     }else{
 
