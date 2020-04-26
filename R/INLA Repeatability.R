@@ -4,22 +4,28 @@ INLARep <- function(Model, Family = "gaussian",
                     Draw = F, NDraw = 1,
                     Return = "Raw",
                     SPDEComponent = "Variance",
-                    SPDEModel = NULL, ...){
+                    Exclude = "Nowt",
+                    SPDEModel = NULL,
+                    ...){
 
   require(ggregplot); require(INLA)
 
+  Marginals <- Model$marginals.hyperpar
+
+  Marginals <- Marginals[which(!names(Marginals) %in% Exclude)]
+
   if(!Draw){
 
-    SigmaList <- CIList <- list()
+    SigmaList <- list()
 
-    Parameters <- which(names(Model$marginals.hyperpar) %>% str_split(" ") %>%
-                          map(1) %in%c("Precision","precision", "size", "Range"))
+    Parameters <- which(names(Marginals) %>% str_split(" ") %>%
+                          map(1) %in%c("Precision","precision", "size"))
 
     if(length(Parameters)>0){
 
-      HyperPars <- Model$marginals.hyperpar[Parameters]
+      HyperPars <- Marginals[Parameters]
 
-      Sizes <- names(Model$marginals.hyperpar) %>% str_split(" ") %>% map(1) %in%c("size") %>%
+      Sizes <- names(Marginals) %>% str_split(" ") %>% map(1) %in%c("size") %>%
         which()
 
       for(x in 1:(length(HyperPars))){
@@ -48,7 +54,7 @@ INLARep <- function(Model, Family = "gaussian",
         }
 
         SigmaList[[x]] <- sigma
-        CIList[[x]] <- ci
+
       }
 
       NameList <- sapply(names(HyperPars), function(a) last(strsplit(a, " ")[[1]]))
@@ -63,9 +69,9 @@ INLARep <- function(Model, Family = "gaussian",
 
       names(SigmaList) <- NameList
 
-      if(any(names(Model$marginals.hyperpar) %>% str_detect("Range"))){
+      if(any(names(Marginals) %>% str_detect("Range"))){
 
-        Var <- names(Model$marginals.hyperpar)[which(names(Model$marginals.hyperpar) %>%
+        Var <- names(Marginals)[which(names(Marginals) %>%
                                                        str_detect("Range"))]
 
         Expl <- Var %>% str_split(" ") %>% last %>% last
@@ -127,21 +133,21 @@ INLARep <- function(Model, Family = "gaussian",
 
     return(ReturnDF)
 
-  }else{
+  }else{ # Other end of if(!Draw) #####
 
-    SigmaList <- CIList <- list()
+    SigmaList <- list()
 
-    Model$marginals.hyperpar %>% names %>%
-      str_detect(c("Precision|precision|size|Range")) %>%
-      names(Model$marginals.hyperpar)[.] ->
+    Marginals %>% names %>%
+      str_detect(c("Precision|precision|size")) %>%
+      names(Marginals)[.] ->
 
       Parameters
 
     if(length(Parameters)>0){
 
-      HyperPars <- Model$marginals.hyperpar[Parameters]
+      HyperPars <- Marginals[Parameters]
 
-      Sizes <- names(Model$marginals.hyperpar) %>%
+      Sizes <- names(Marginals) %>%
         str_split(" ") %>% map(1) %in%c("size") %>%
         which()
 
@@ -187,7 +193,7 @@ INLARep <- function(Model, Family = "gaussian",
 
       if(any(Parameters %>% str_detect("Range"))){
 
-        Var <- Parameters[which(names(Model$marginals.hyperpar) %>%
+        Var <- Parameters[which(names(Marginals) %>%
                                   str_detect("Range"))]
 
         Expl <- Var %>% str_split(" ") %>% last %>% last
@@ -257,7 +263,11 @@ INLARep <- function(Model, Family = "gaussian",
 
     if(Return == "Raw") return(ReturnDF) else{
 
-      ReturnDF %>% as.data.frame %>% gather("Component") %>% na.omit %>%
+      ReturnDF %>% as.data.frame %>%
+
+        gather("Component") %>%
+
+        na.omit %>%
 
         group_by(Component) %>%
         summarise(Mean = posterior.mode(as.mcmc(value)),
@@ -327,9 +337,7 @@ INLARepPlot <- function(ModelList,
       Sums = c(1, 1-cumsum(Subdf$Mean))
       Sums = Sums[-length(Sums)]
       OutputList[OutputList$Model == i,c("Lower", "Upper")] <-
-        OutputList %>% filter(Model == i) %>%
-        mutate(Lower = Lower + Sums - Mean,
-               Upper = Upper + Sums - Mean) %>% select(Lower, Upper)
+        OutputList %>% filter(Model == i)
 
     }
 
@@ -347,9 +355,6 @@ INLARepPlot <- function(ModelList,
   }
 
   OutputLong <- OutputList %>% rename(Variance = Mean)
-  OutputLong[,c("Lower","Upper")] <- OutputLong %>%
-    mutate(Lower = ifelse(Upper-Lower<0.01, NA, Lower),
-           Upper = ifelse(Upper-Lower<0.01, NA, Upper)) %>% select(Lower, Upper)
 
   if(!Residual){
     OutputLong <- OutputLong %>% filter(!Var == "Residual")

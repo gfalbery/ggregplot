@@ -4,6 +4,7 @@
 INLARange <- function(ModelList, MaxRange, MeshList,
                       ModelNames = NULL,
                       Priors = NULL, PriorProbabilities = NULL,
+                      WNames = "w",
                       Return = "Figure",
                       Resolution = 100){
 
@@ -12,6 +13,8 @@ INLARange <- function(ModelList, MaxRange, MeshList,
   if(is.null(Priors)){
 
     Priors <- MaxRange/2
+
+    PriorProbabilities <- 0.5
 
   }
 
@@ -37,7 +40,7 @@ INLARange <- function(ModelList, MaxRange, MeshList,
 
   SpFi.w = 1:length(ModelList) %>% lapply(function(j){
     inla.spde2.result(inla = ModelList[[j]],
-                      name = "w",
+                      name = WNames[[j]],
                       spde = inla.spde2.pcmatern(mesh = MeshList[[j]],
                                                  prior.range = c(Priors[[j]], PriorProbabilities[[j]]),
                                                  prior.sigma = c(.5, .5)),

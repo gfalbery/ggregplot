@@ -13,7 +13,11 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL,
     Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
     f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, " + ", Random2, collapse = " + ")))
 
-  }else{f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, collapse = " + ")))}
+  }else{
+
+    f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, collapse = " + ")))
+
+  }
 
   BaseModel <-   inla(f1,
                       family = Family,

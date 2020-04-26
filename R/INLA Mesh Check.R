@@ -3,6 +3,8 @@
 
 GetMesh <- function(Mesh){
 
+  require(spatial); require(grDevices)
+
   Mesh$loc %>% as.data.frame() %>% rename(X = V1, Y = V2) %>% mutate(Vertex = 1:n()) -> Vertices
 
   Mesh$graph$vv %>% as.matrix %>%
