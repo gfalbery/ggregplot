@@ -29,9 +29,14 @@ INLAFit <- function(Model, TestDF,
 
     require(INLA)
 
+    Ranges <-
+
+      rownames(Model$summary.hyperpar)[str_detect(rownames(Model$summary.hyperpar), "Range")] %>%
+      str_split(" ") %>% map_chr(last)
+
     RandomEstimates <- Model$summary.random
 
-    RandomCovar <- names(RandomEstimates) %>% setdiff("w")
+    RandomCovar <- names(RandomEstimates) %>% setdiff(Ranges)
 
     if(length(RandomCovar)>0){
 
@@ -145,7 +150,7 @@ INLAFit <- function(Model, TestDF,
       }
     }
 
-    if("w" %in% names(RandomEstimates)){
+    if(length(Ranges)>0){
 
       if(!class(Locations) == "matrix"){
 
@@ -155,7 +160,7 @@ INLAFit <- function(Model, TestDF,
 
       Projection <- inla.mesh.projector(mesh = Mesh, loc = Locations, dims = c(300, 300))
 
-      WPredictions <- c(inla.mesh.project(Projection, Model$summary.random$w$mean))
+      WPredictions <- c(inla.mesh.project(Projection, Model$summary.random[[Ranges]]$mean))
 
       if(Return == "Vector"){
 
@@ -179,9 +184,14 @@ INLAFit <- function(Model, TestDF,
 
   }else{
 
+    Ranges <-
+
+      rownames(Model$summary.hyperpar)[str_detect(rownames(Model$summary.hyperpar), "Range")] %>%
+      str_split(" ") %>% map_chr(last)
+
     RandomEstimates <- Model$summary.random
 
-    RandomCovar <- names(RandomEstimates) %>% setdiff("w")
+    RandomCovar <- names(RandomEstimates) %>% setdiff(Ranges)
 
     if(length(RandomCovar)>0){
 
@@ -322,7 +332,7 @@ INLAFit <- function(Model, TestDF,
 
     }
 
-    if("w" %in% names(RandomEstimates)){
+    if(length(Ranges)>0){
 
       if(!class(Locations) == "matrix"){
 
@@ -332,7 +342,7 @@ INLAFit <- function(Model, TestDF,
 
       Projection <- inla.mesh.projector(mesh = Mesh, loc = Locations, dims = c(300, 300))
 
-      Model$marginals.random$w %>% map(~inla.rmarginal(NDraw, .x)) -> WList
+      Model$marginals.random[[Ranges]] %>% map(~inla.rmarginal(NDraw, .x)) -> WList
 
       if(Return == "Vector"){
 

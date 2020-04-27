@@ -72,7 +72,7 @@ INLARep <- function(Model, Family = "gaussian",
       if(any(names(Marginals) %>% str_detect("Range"))){
 
         Var <- names(Marginals)[which(names(Marginals) %>%
-                                                       str_detect("Range"))]
+                                        str_detect("Range"))]
 
         Expl <- Var %>% str_split(" ") %>% last %>% last
 
@@ -301,8 +301,15 @@ INLARepPlot <- function(ModelList,
 
   if(is.null(ModelNames)){
 
-    ModelNames <- 1:length(ModelList)
+    if(is.null(names(ModelList))){
 
+      ModelNames <- 1:length(ModelList)
+
+    }else{
+
+      ModelNames <- names(ModelList)
+
+    }
   }
 
   OutputList <- lapply(ModelList, function(a) INLARep(a, ...))
