@@ -6,7 +6,8 @@ INLAFit <- function(Model, TestDF,
                     HoldFixed = NULL,
                     HoldRandom = NULL,
                     Locations = NULL,
-                    Mesh = NULL, SPDEModel = NULL, Groups = 1,
+                    Mesh = NULL, SPDEModel = NULL,
+                    Groups = 1, GroupVariable = NULL,
                     Draw = F, NDraw = 1,
                     Return = "Vector"){
 
@@ -158,19 +159,53 @@ INLAFit <- function(Model, TestDF,
 
       }
 
-      Projection <- inla.mesh.projector(mesh = Mesh, loc = Locations, dims = c(300, 300))
+      Projection <-
+        inla.mesh.projector(mesh = Mesh, loc = Locations, dims = c(300, 300))
 
-      WPredictions <- c(inla.mesh.project(Projection, Model$summary.random[[Ranges]]$mean))
+      Model$summary.random[[Ranges]]$mean %>%
+        split(1:Groups) %>%
+        map(~inla.mesh.project(Projection, .x)) %>%
+
+        bind_cols ->
+
+        WPredictions
+
+      names(WPredictions) <- paste0(Ranges, ".", names(WPredictions))
+
+      if(!is.null(GroupVar)){
+
+        TestDF$GroupVar <- TestDF[,GroupVar]
+
+        TestDF %>%
+          mutate(Value = 1) %>%
+          #select(GroupVar, Value) %>%
+          pivot_wider(names_from = "GroupVar",
+                      values_from = "Value") ->
+
+          GroupVarMatrix
+
+        GroupVarMatrix[,gtools::mixedsort(as.character(1:Groups))] ->
+
+          GroupVarMatrix
+
+        GroupVarMatrix[is.na(GroupVarMatrix)] <- 0
+
+        WPredictions*GroupVarMatrix ->
+
+          WPredictions
+
+      }
 
       if(Return == "Vector"){
 
-        FullPredictions <- Predictions + WPredictions
+        FullPredictions <- Predictions + rowSums(WPredictions)
 
       }else{
 
         FullPredictions <- Predictions %>%
-          as.data.frame %>% mutate(W = WPredictions) %>%
-          as.matrix
+          as_tibble %>%
+          bind_cols(WPredictions) %>%
+          as.data.frame()
 
       }
 
@@ -342,21 +377,7 @@ INLAFit <- function(Model, TestDF,
 
       Projection <- inla.mesh.projector(mesh = Mesh, loc = Locations, dims = c(300, 300))
 
-      if(Groups == 1){
-
-        Model$marginals.random[[Ranges]] %>% map(~inla.rmarginal(NDraw, .x)) -> WList
-
-      }else{
-
-        Model$marginals.random[[Ranges]] %>% map(~inla.rmarginal(NDraw, .x)) -> WList
-
-        Projection <-
-
-          apply(matrix(Model$summary.random[[Ranges]]$mean, ncol = Groups), 2,
-
-                function(x) c(inla.mesh.project(Projection, x)))
-
-      }
+      Model$marginals.random[[Ranges]] %>% map(~inla.rmarginal(NDraw, .x)) -> WList
 
       if(Return == "Vector"){
 
