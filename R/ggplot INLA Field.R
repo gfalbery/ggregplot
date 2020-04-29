@@ -14,7 +14,13 @@ ggField <- function(Model, Mesh, Groups = 1,
 
   Full.Projection <- expand.grid(x = Projection$x, y = Projection$y)
 
-  Dim1 <- dim(Full.Projection)[1]
+  Dim1 <- nrow(Full.Projection)
+
+  WName <- Model$summary.hyperpar %>% names
+
+  WName[str_detect(WName, "Range")] %>%
+    str_split(" ") %>% map_chr(last) ->
+    WName
 
   if(Groups == 1){
 
@@ -22,12 +28,16 @@ ggField <- function(Model, Mesh, Groups = 1,
 
   }else{
 
-    Full.Projection[,paste0("Group",1:Groups)]<-apply(
-      matrix(Model$summary.random$w$mean,ncol=Groups), 2,
-      function(x) c(inla.mesh.project(Projection,x)))
+    Full.Projection[,paste0("Group",1:Groups)] <-
+
+      apply(matrix(Model$summary.random[[WName]]$mean, ncol = Groups), 2,
+
+            function(x) c(inla.mesh.project(Projection, x)))
 
     Full.Projection <-
-      reshape2::melt(Full.Projection, id.vars = c(names(Full.Projection)[-which(names(Full.Projection)%in%paste0("Group",1:Groups))]))
+      reshape2::melt(Full.Projection,
+                     id.vars = c(names(Full.Projection)[-which(names(Full.Projection)%in%paste0("Group",
+                                                                                                1:Groups))]))
 
   }
 
@@ -50,9 +60,11 @@ ggField <- function(Model, Mesh, Groups = 1,
   FieldPlot <- ggplot(Full.Projection,aes(x, y))
 
   if(!is.null(Boundary)){
+
     names(Boundary)[1] <- "x"
     names(Boundary)[2] <- "y"
     FieldPlot <- FieldPlot + geom_polygon(data = Boundary, fill = "white")
+
   }
 
   if(!FillAlpha){
