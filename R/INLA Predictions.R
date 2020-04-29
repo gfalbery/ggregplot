@@ -379,13 +379,49 @@ INLAFit <- function(Model, TestDF,
 
       Model$marginals.random[[Ranges]] %>% map(~inla.rmarginal(NDraw, .x)) -> WList
 
+      if(!is.null(GroupVar)){
+
+        TestDF$GroupVar <- TestDF[,GroupVar]
+
+        TestDF %>%
+          mutate(Value = 1) %>%
+          #select(GroupVar, Value) %>%
+          pivot_wider(names_from = "GroupVar",
+                      values_from = "Value") ->
+
+          GroupVarMatrix
+
+        GroupVarMatrix[,gtools::mixedsort(as.character(1:Groups))] ->
+
+          GroupVarMatrix
+
+        GroupVarMatrix[is.na(GroupVarMatrix)] <- 0
+
+      }
+
       if(Return == "Vector"){
 
         1:NDraw %>% map(~{
 
-          WPredictions <- c(inla.mesh.project(Projection, WList %>% map_dbl(.x)))
+          WList %>% map_dbl(.x) %>%
+            split(1:Groups) %>%
+            map(~inla.mesh.project(Projection, .x)) %>%
 
-          FullPredictions <- PredictionList[[.x]] + WPredictions
+            bind_cols ->
+
+            WPredictions
+
+          names(WPredictions) <- paste0(Ranges, ".", names(WPredictions))
+
+          if(!is.null(GroupVar)){
+
+            WPredictions*GroupVarMatrix ->
+
+              WPredictions
+
+          }
+
+          FullPredictions <- PredictionList[[.x]] + rowSums(WPredictions)
 
           return(FullPredictions)
 
@@ -395,11 +431,28 @@ INLAFit <- function(Model, TestDF,
 
         1:NDraw %>% map(~{
 
-          WPredictions <- c(inla.mesh.project(Projection, WList %>% map_dbl(.x)))
+          WList %>% map_dbl(.x) %>%
+            split(1:Groups) %>%
+            map(~inla.mesh.project(Projection, .x)) %>%
+
+            bind_cols ->
+
+            WPredictions
+
+          names(WPredictions) <- paste0(Ranges, ".", names(WPredictions))
+
+          if(!is.null(GroupVar)){
+
+            WPredictions*GroupVarMatrix ->
+
+              WPredictions
+
+          }
 
           FullPredictions <- PredictionList[[.x]] %>%
-            as.data.frame %>% mutate(W = WPredictions) %>%
-            as.matrix
+            as_tibble %>%
+            bind_cols(WPredictions) %>%
+            as.data.frame()
 
           return(FullPredictions)
 
