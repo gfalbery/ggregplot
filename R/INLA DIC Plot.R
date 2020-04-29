@@ -3,6 +3,7 @@ INLADICFig <- function(ModelList,
                        Just = F, Order = F,
                        Delta = F,
                        Legend = F,
+                       Responses = NULL,
                        CutOff = 2, OverPlot = F){
 
   if(!OverPlot){
@@ -84,7 +85,7 @@ INLADICFig <- function(ModelList,
 
     if(is.null(Responses)){
 
-      Responses <- 1:length(ModelList)
+      Responses <- paste0("Resp.", 1:length(ModelList))
 
     }
 

@@ -6,7 +6,7 @@ INLAFit <- function(Model, TestDF,
                     HoldFixed = NULL,
                     HoldRandom = NULL,
                     Locations = NULL,
-                    Mesh = NULL, SPDEModel = NULL,
+                    Mesh = NULL, SPDEModel = NULL, Groups = 1,
                     Draw = F, NDraw = 1,
                     Return = "Vector"){
 
@@ -342,7 +342,21 @@ INLAFit <- function(Model, TestDF,
 
       Projection <- inla.mesh.projector(mesh = Mesh, loc = Locations, dims = c(300, 300))
 
-      Model$marginals.random[[Ranges]] %>% map(~inla.rmarginal(NDraw, .x)) -> WList
+      if(Groups == 1){
+
+        Model$marginals.random[[Ranges]] %>% map(~inla.rmarginal(NDraw, .x)) -> WList
+
+      }else{
+
+        Model$marginals.random[[Ranges]] %>% map(~inla.rmarginal(NDraw, .x)) -> WList
+
+        Projection <-
+
+          apply(matrix(Model$summary.random[[Ranges]]$mean, ncol = Groups), 2,
+
+                function(x) c(inla.mesh.project(Projection, x)))
+
+      }
 
       if(Return == "Vector"){
 

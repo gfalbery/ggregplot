@@ -38,6 +38,12 @@ INLARange <- function(ModelList, MaxRange, MeshList,
 
   }
 
+  if(length(WNames) == 1) {
+
+    WNames <- rep(WNames, length(ModelList))
+
+  }
+
   SpFi.w = 1:length(ModelList) %>% lapply(function(j){
     inla.spde2.result(inla = ModelList[[j]],
                       name = WNames[[j]],
