@@ -16,9 +16,9 @@ ggField <- function(Model, Mesh, Groups = 1,
 
   Dim1 <- nrow(Full.Projection)
 
-  WName <- Model$summary.hyperpar %>% names
+  WName <- Model$summary.hyperpar %>% rownames
 
-  WName[str_detect(WName, "Range")] %>%
+  WName[str_detect(WName, "Range for")] %>%
     str_split(" ") %>% map_chr(last) ->
     WName
 
