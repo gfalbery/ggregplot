@@ -11,8 +11,13 @@ GrapDF <- function(List, Var){
     
     N = N[!IsNull],
     
-    Mapped[!IsNull] %>% unlist
+    Value = Mapped[!IsNull] %>% unlist
     
-  )
+  ) -> DF
+  
+  names(DF)[2] <- Var
+  
+  return(DF)
+  
 }
 
