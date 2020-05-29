@@ -1,7 +1,7 @@
 INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL,
                          Rounds = Inf,
                          Clashes = NULL,
-                         AllModels = F,
+                         AllModels = F, BaseModel = F,
                          RandomModel = NULL, Family, Data, Delta = 2){
 
   require(INLA); require(ggplot2)
@@ -19,15 +19,15 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL,
 
   }
 
-  BaseModel <-   inla(f1,
-                      family = Family,
-                      data = Data,
-                      control.compute = list(dic = TRUE))
+  Base <- inla(f1,
+               family = Family,
+               data = Data,
+               control.compute = list(dic = TRUE))
 
   ModelList <- AllModelList <- RemovedList <- FullFormulaList <- FormulaList <- list()
   DICList <- dDICList <- list()
 
-  DICList[["Base"]] <- BaseModel$dic$dic
+  DICList[["Base"]] <- Base$dic$dic
   FullFormulaList[["Base"]] <- f1
 
   for(x in 1:length(Add)){
@@ -62,7 +62,7 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL,
 
   FullFormulaList[[2]] <- FormulaList
 
-  AllModelList[[1]] <- BaseModel
+  AllModelList[[1]] <- Base
   AllModelList[[2]] <- ModelList
 
   NewExplanatory <- Explanatory
@@ -161,7 +161,7 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL,
 
     }else{
 
-      FinalModel <- BaseModel
+      FinalModel <- Base
       FinalFormula <- f1
 
       print("Nothing Kept")
@@ -170,7 +170,7 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL,
 
   }else{
 
-    FinalModel <- BaseModel
+    FinalModel <- Base
     FinalFormula <- f1
 
     print("Nothing Kept")
@@ -188,6 +188,12 @@ INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL,
   if(AllModels){
 
     ReturnList$AllModels <- AllModelList
+
+  }
+
+  if(BaseModel){
+
+    ReturnList$Base <- Base
 
   }
 

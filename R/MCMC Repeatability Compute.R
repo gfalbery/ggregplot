@@ -13,7 +13,7 @@ MCMCRep <- function(Model,scale="original"){
         Ve <- rowSums(Model$VCV) #Inclusive Error variance
         Expected <- exp(Beta0 + (0.5*(Ve))) #Expected values
         Repeatability1 <- (Expected*(exp(Va) - 1))/(Expected*(exp(Ve) - 1) + 1) #Repeatability
-        mat[j,] <- c(colnames(Model$VCV)[j], round(posterior.mode(Repeatability1), digits = 2), round(HPDinterval(Repeatability1)[,1],digits=2),round(HPDinterval(Repeatability1)[,2],digits=2))
+        mat[j,] <- c(colnames(Model$VCV)[j], (posterior.mode(Repeatability1)), (HPDinterval(Repeatability1)[,1]),(HPDinterval(Repeatability1)[,2]))
 
       }
     }
@@ -25,7 +25,7 @@ MCMCRep <- function(Model,scale="original"){
         Va <- Model$VCV[,j] #Associated variance
         Ve <- rowSums(Model$VCV)
         Repeatability1 <- (Va/Ve)
-        mat[j,] <- c(colnames(Model$VCV)[j],round(posterior.mode(Repeatability1),digits=2),round(HPDinterval(Repeatability1)[,1],digits=2),round(HPDinterval(Repeatability1)[,2],digits=2))
+        mat[j,] <- c(colnames(Model$VCV)[j],(posterior.mode(Repeatability1)),(HPDinterval(Repeatability1)[,1]),(HPDinterval(Repeatability1)[,2]))
 
       }
     }
@@ -41,7 +41,7 @@ MCMCRep <- function(Model,scale="original"){
         Va <- Model$VCV[,j] #Associated variance
         Ve <- rowSums(Model$VCV)
         Repeatability1 <- Va/(Ve + log(1/exp(Beta0) + 1))
-        mat[j,] <- c(colnames(Model$VCV)[j],round(posterior.mode(Repeatability1),digits=2),round(HPDinterval(Repeatability1)[,1],digits=2),round(HPDinterval(Repeatability1)[,2],digits=2))
+        mat[j,] <- c(colnames(Model$VCV)[j],(posterior.mode(Repeatability1)),(HPDinterval(Repeatability1)[,1]),(HPDinterval(Repeatability1)[,2]))
       }
     }
 
@@ -51,7 +51,7 @@ MCMCRep <- function(Model,scale="original"){
         Va <- Model$VCV[,j] #Associated variance
         Ve <- rowSums(Model$VCV)
         Repeatability1 <- (Va/Ve)
-        mat[j,] <- c(colnames(Model$VCV)[j],round(posterior.mode(Repeatability1),digits=2),round(HPDinterval(Repeatability1)[,1],digits=2),round(HPDinterval(Repeatability1)[,2],digits=2))      }
+        mat[j,] <- c(colnames(Model$VCV)[j],(posterior.mode(Repeatability1)),(HPDinterval(Repeatability1)[,1]),(HPDinterval(Repeatability1)[,2]))      }
     }
   }
 

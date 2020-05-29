@@ -5,7 +5,7 @@ SinaGraph <- function(df, x, y, z = x,
                       Alpha = 1,
                       Scale = "area",
                       Mean = T,
-                      Violin = F,
+                      Sina = T, Violin = F,
                       ColourGroups = F){
 
   require(ggplot2); require(dplyr); require(ggforce)
@@ -44,24 +44,23 @@ SinaGraph <- function(df, x, y, z = x,
 
   }
 
+  SPlot <- df %>%
+    ggplot(aes(X, Y, colour = Colour)) +
+    labs(x = x, y = y)
+
   if(Violin){
 
-    SPlot <- df %>%
-      ggplot(aes(X, Y, colour = Colour)) +
-      geom_violin(scale = Scale) +
+    SPlot <- SPlot +
+      geom_violin(scale = Scale)
+
+  }
+
+  if(Sina){
+
+    SPlot <- SPlot +
       geom_sina(position = position_dodge(0.9),
                 alpha = Alpha,
-                scale = Scale) +
-      labs(x = x, y = y)
-
-  }else{
-
-    SPlot <- df %>%
-      ggplot(aes(X, Y, colour = Colour)) +
-      geom_sina(position = position_dodge(0.9),
-                alpha = Alpha,
-                scale = Scale) +
-      labs(x = x, y = y)
+                scale = Scale)
 
   }
 
@@ -82,7 +81,8 @@ SinaGraph <- function(df, x, y, z = x,
                       width = 0.1,
                       colour = "black",
                       position = position_dodge(0.9))
-    } else{
+
+    }else{
 
       SPlot <- SPlot +
         geom_point(data = Errordf,
