@@ -1,4 +1,5 @@
-INLAModelAdd <- function(Response, Explanatory, Add, Random = NULL,
+INLAModelAdd <- function(Response, Explanatory, Add,
+                         Random = NULL,
                          Rounds = Inf,
                          Clashes = NULL,
                          AllModels = F, BaseModel = F,
