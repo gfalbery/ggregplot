@@ -172,14 +172,14 @@ INLAFit <- function(Model, TestDF,
 
       names(WPredictions) <- paste0(Ranges, ".", names(WPredictions))
 
-      if(!is.null(GroupVar)){
+      if(!is.null(GroupVariable)){
 
-        TestDF$GroupVar <- TestDF[,GroupVar]
+        TestDF$GroupVariable <- TestDF[,GroupVariable]
 
         TestDF %>%
           mutate(Value = 1) %>%
-          #select(GroupVar, Value) %>%
-          pivot_wider(names_from = "GroupVar",
+          #select(GroupVariable, Value) %>%
+          pivot_wider(names_from = "GroupVariable",
                       values_from = "Value") ->
 
           GroupVarMatrix
@@ -329,7 +329,7 @@ INLAFit <- function(Model, TestDF,
 
         1:NDraw %>% map(~{
 
-          EstimateList[[.x]] * TXMatrix %>% t
+          EstimateList[[.x]] * TMatrix %>% t
 
         }) -> PredictionList
 
@@ -379,14 +379,14 @@ INLAFit <- function(Model, TestDF,
 
       Model$marginals.random[[Ranges]] %>% map(~inla.rmarginal(NDraw, .x)) -> WList
 
-      if(!is.null(GroupVar)){
+      if(!is.null(GroupVariable)){
 
-        TestDF$GroupVar <- TestDF[,GroupVar]
+        TestDF$GroupVariable <- TestDF[,GroupVariable]
 
         TestDF %>%
           mutate(Value = 1) %>%
-          #select(GroupVar, Value) %>%
-          pivot_wider(names_from = "GroupVar",
+          #select(GroupVariable, Value) %>%
+          pivot_wider(names_from = "GroupVariable",
                       values_from = "Value") ->
 
           GroupVarMatrix
@@ -413,7 +413,7 @@ INLAFit <- function(Model, TestDF,
 
           names(WPredictions) <- paste0(Ranges, ".", names(WPredictions))
 
-          if(!is.null(GroupVar)){
+          if(!is.null(GroupVariable)){
 
             WPredictions*GroupVarMatrix ->
 
@@ -441,7 +441,7 @@ INLAFit <- function(Model, TestDF,
 
           names(WPredictions) <- paste0(Ranges, ".", names(WPredictions))
 
-          if(!is.null(GroupVar)){
+          if(!is.null(GroupVariable)){
 
             WPredictions*GroupVarMatrix ->
 
