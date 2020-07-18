@@ -337,9 +337,11 @@ INLAFit <- function(Model, TestDF,
 
     }else{
 
-      XMatrix <- FixedXMatrix
+      XMatrix <- FixedXMatrix %>% as_tibble
 
       SharedNames <- intersect(names(FixedEstimateDF), colnames(XMatrix))
+
+      FixedEstimateDF %<>% as_tibble
 
       FixedEstimateDF[,SharedNames] %>% apply(1, function(a) list(a)) %>% map(1) -> EstimateList
 

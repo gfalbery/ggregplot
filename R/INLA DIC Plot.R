@@ -58,7 +58,7 @@ INLADICFig <- function(ModelList,
       geom_line() +
       labs(x = "Model") +
       scale_x_continuous(breaks = as.numeric(as.factor(df$ModelName)), labels = df$ModelName) +
-      geom_point(data = df[df$Competitive == "Y",]) +
+      # geom_point(data = df[df$Competitive == "Y",]) +
       theme(axis.text.x = element_text(angle = Angle, hjust = Hjust))
 
     if(!Legend){
@@ -131,11 +131,10 @@ INLADICFig <- function(ModelList,
 
     DICPlot <- DICPlot +
       geom_point(aes(shape = Competitive)) +
-      scale_shape_manual(values = c(1,2)) +
+      scale_shape_manual(values = c(1, 2)) +
       geom_line(aes(group = Response, colour = Response)) +
       labs(x = "Model") +
       scale_x_continuous(breaks = as.numeric(as.factor(df$ModelName)), labels = df$ModelName) +
-      geom_point(data = df[df$Competitive == "Y",]) +
       theme(axis.text.x = element_text(angle = Angle, hjust = Hjust))
 
     if(!Legend){
