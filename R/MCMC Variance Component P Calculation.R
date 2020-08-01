@@ -17,4 +17,7 @@ PCalc <- function(Vector, Minimum = "Minimum"){
 
     }
   }
+
+  return(Value)
+
 }
