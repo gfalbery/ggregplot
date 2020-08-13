@@ -3,9 +3,12 @@ INLAModelAdd <- function(Response, Explanatory, Add,
                          Rounds = Inf,
                          Clashes = NULL,
                          AllModels = F, BaseModel = F,
-                         RandomModel = NULL, Family, Data, Delta = 2){
+                         RandomModel = NULL, Family, Data, Delta = 2,
+                         AddSpatial = F, Coordinates = c("X", "Y")){
 
   require(INLA); require(ggplot2)
+
+  Data %<>% as.data.frame
 
   Explanatory2 <- paste(Explanatory, collapse = " + ")
 
@@ -70,6 +73,8 @@ INLAModelAdd <- function(Response, Explanatory, Add,
 
   Add2 <- Add
 
+  KeptCovar <- c()
+
   if((min(dDICList[[length(dDICList)]]) < -Delta)&(Rounds>1)&(length(Add2)>0)){
 
     while((min(dDICList[[length(dDICList)]]) < -Delta)&(Rounds>1)&(length(Add2)>0)){
@@ -77,6 +82,8 @@ INLAModelAdd <- function(Response, Explanatory, Add,
       Rounds <- Rounds - 1
 
       Kept <- Add2[which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))]
+
+      KeptCovar <- c(KeptCovar, Kept)
 
       ModelList <- FormulaList <- list()
 
@@ -195,6 +202,95 @@ INLAModelAdd <- function(Response, Explanatory, Add,
   if(BaseModel){
 
     ReturnList$Base <- Base
+
+  }
+
+  if(AddSpatial){
+
+    SubCovar <- c(Explanatory, KeptCovar)
+
+    print(SubCovar)
+
+    Points <- Data %>% dplyr::select(all_of(Coordinates)) %>%
+      as.data.frame
+
+    Points %>%
+      slice(sample(1:n(), 100)) %>% as.matrix %>%
+      dist %>% c %>% max %>% divide_by(2) ->
+      NullRangePrior; NullRangePrior
+
+    Points %<>% as.matrix
+
+    Mesh <- inla.mesh.2d(loc = Points,
+                         max.edge = NullRangePrior/10,
+                         cutoff = NullRangePrior/20)
+
+    A3 <- inla.spde.make.A(Mesh, loc = Points) # Making A matrix
+
+    spde <- inla.spde2.pcmatern(mesh = Mesh,
+                                prior.range = c(NullRangePrior, 0.5),
+                                prior.sigma = c(.5, .5)) # Making SPDE
+
+    w.index <- inla.spde.make.index('w', n.spde = spde$n.spde)
+
+    BaseLevels <- GetBaseLevels(SubCovar, Data)
+
+    Xm <- model.matrix(as.formula(paste0("~ -1 +",
+                                         paste(SubCovar, collapse = " + "))),
+                       data = Data)
+
+    X <- as.data.frame(Xm)[,!colnames(Xm)%in%BaseLevels]
+
+    if(!is.null(Random)){
+
+      Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
+
+      f1 <- as.formula(paste0("y", " ~ ",
+                              paste(colnames(X), " + ", Random2, collapse = " + "),
+                              "+ f(w, model = spde)"))
+
+    }else{
+
+      f1 <- as.formula(paste0("y", " ~ ",
+                              paste(colnames(X), collapse = " + "),
+                              "+ f(w, model = spde)"))
+
+    }
+
+    N <- nrow(Data)
+
+    list(Intercept = rep(1, N), # Leave
+      X = X) -> EffectsList
+
+    if(!is.null(Random)){
+
+      EffectsList[Random] <-
+        map(Random, ~Data[,.x])
+
+    }
+
+    EffectsList$w <- w.index
+
+    AList <- rep(1, length(EffectsList)-1) %>% as.list %>%
+      append(list((A3)))
+
+    SocialStack <- inla.stack(
+      data = list(y = Data[,Response]),
+      A = AList, # Vector of Multiplication factors
+      effects = EffectsList) # Leave
+
+    SpatialModel <- inla(f1, # f2 + SPDE random effect
+                         family = Family,
+                         data = inla.stack.data(SocialStack),
+                         control.compute = list(dic = TRUE),
+                         control.predictor = list(A = inla.stack.A(SocialStack))
+    )
+
+    SpatialList <- list(Model = SpatialModel,
+                        Mesh = Mesh,
+                        SPDE = spde)
+
+    ReturnList$Spatial <- SpatialList
 
   }
 
