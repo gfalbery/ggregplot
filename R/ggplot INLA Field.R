@@ -1,6 +1,6 @@
 # ggplot for INLA fields ####
 
-ggField <- function(Model, Mesh, Groups = 1,
+ggField <- function(Model, Mesh, Groups = 1, GroupVar = NULL,
                     Fill = "Discrete", FillAlpha = F,
                     Boundary = NULL, BoundaryWidth = 1,
                     Res = 300,
@@ -107,9 +107,21 @@ ggField <- function(Model, Mesh, Groups = 1,
     Points$X <- Points[,1]
     Points$Y <- Points[,2]
 
-    FieldPlot <- FieldPlot +
-      geom_point(data = Points, inherit.aes = F, aes(X, Y), alpha = PointAlpha, colour = PointColour)
+    if(Groups == 1){
 
+      FieldPlot <- FieldPlot +
+        geom_point(data = Points, inherit.aes = F, aes(X, Y), alpha = PointAlpha, colour = PointColour)
+
+    }else{
+
+      Points$Group <- Points[,GroupVar] %>% as.factor %>% as.numeric
+
+      FieldPlot <- FieldPlot +
+        geom_point(data = Points, inherit.aes = F,
+                   aes(X, Y, group = Group),
+                   alpha = PointAlpha, colour = PointColour)
+
+    }
   }
 
   return(FieldPlot)
