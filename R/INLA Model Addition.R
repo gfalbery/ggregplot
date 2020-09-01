@@ -4,7 +4,9 @@ INLAModelAdd <- function(Response, Explanatory, Add,
                          Clashes = NULL,
                          AllModels = F, BaseModel = F,
                          RandomModel = NULL, Family, Data, Delta = 2,
-                         AddSpatial = F, Coordinates = c("X", "Y")){
+                         ReturnData = T,
+                         AddSpatial = F, Coordinates = c("X", "Y"),
+                         Groups = F, GroupVar = NULL){
 
   require(INLA); require(ggplot2)
 
@@ -145,6 +147,26 @@ INLAModelAdd <- function(Response, Explanatory, Add,
 
           RemovedList[[length(RemovedList) + 1]] <- Add2
 
+        }else{
+
+          AllModelList[[length(AllModelList) + 1]] <-
+            AllModelList[[length(AllModelList)]][[Kept]]
+
+          FullFormulaList[[length(FullFormulaList) + 1]] <-
+            FullFormulaList[[length(FullFormulaList)]][[Kept]]
+
+          DICList[[length(DICList) + 1]] <-
+            DICList[[length(DICList)]][[Kept]]
+
+          names(DICList[[length(DICList)]]) <- Kept
+
+          dDICList[[length(dDICList) + 1]] <-
+            min(dDICList[[length(dDICList)]])
+
+          names(dDICList[[length(dDICList)]]) <- Kept
+
+          RemovedList[[length(RemovedList) + 1]] <- Add2
+
         }
       }
     }
@@ -207,7 +229,9 @@ INLAModelAdd <- function(Response, Explanatory, Add,
 
   if(AddSpatial){
 
-    SubCovar <- c(Explanatory, KeptCovar)
+    print("Adding Spatial!")
+
+    SubCovar <- c(Explanatory, KeptCovar) %>% setdiff("1")
 
     print(SubCovar)
 
@@ -245,13 +269,13 @@ INLAModelAdd <- function(Response, Explanatory, Add,
 
       Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
 
-      f1 <- as.formula(paste0("y", " ~ ",
+      f1 <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
                               paste(colnames(X), " + ", Random2, collapse = " + "),
                               "+ f(w, model = spde)"))
 
     }else{
 
-      f1 <- as.formula(paste0("y", " ~ ",
+      f1 <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
                               paste(colnames(X), collapse = " + "),
                               "+ f(w, model = spde)"))
 
@@ -260,7 +284,7 @@ INLAModelAdd <- function(Response, Explanatory, Add,
     N <- nrow(Data)
 
     list(Intercept = rep(1, N), # Leave
-      X = X) -> EffectsList
+         X = X) -> EffectsList
 
     if(!is.null(Random)){
 
@@ -291,6 +315,79 @@ INLAModelAdd <- function(Response, Explanatory, Add,
                         SPDE = spde)
 
     ReturnList$Spatial <- SpatialList
+
+    if(Groups == T){
+
+      print("Spatiotemporal!")
+
+      Data$GroupVar <- Data[,GroupVar] %>% as.factor %>% as.numeric
+
+      NGroup <- max(Data$GroupVar)
+
+      TemporalA3 <- inla.spde.make.A(Mesh,
+                                     loc = Points,
+                                     repl = Data$GroupVar,
+                                     n.repl = NGroup) # Making A matrix
+
+      TemporalSPDE = inla.spde2.pcmatern(mesh = Mesh,
+                                         prior.range = c(10, 0.5),
+                                         prior.sigma = c(.5, .5)) # Making SPDE
+
+      w.index.temporal <- inla.spde.make.index('wTemporal',
+                                               n.spde = TemporalSPDE$n.spde,
+                                               n.repl = NGroup)
+
+      list(Intercept = rep(1, N), # Leave
+           X = X) -> EffectsList
+
+      if(!is.null(Random)){
+
+        EffectsList[Random] <-
+          map(Random, ~Data[,.x])
+
+      }
+
+      EffectsList$w <- w.index.temporal
+
+      AList <- rep(1, length(EffectsList)-1) %>% as.list %>%
+        append(list(TemporalA3))
+
+      SocialStack <- inla.stack(
+        data = list(y = Data[,Response]),
+        A = AList, # Vector of Multiplication factors
+        effects = EffectsList) # Leave
+
+      if(!is.null(Random)){
+
+        Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
+
+        fst <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
+                                 paste(colnames(X), " + ", Random2, collapse = " + "),
+                                 "+ f(wTemporal, model = TemporalSPDE, replicate = wTemporal.repl)"))
+
+      }else{
+
+        fst <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
+                                 paste(colnames(X), collapse = " + "),
+                                 "+ f(wTemporal, model = TemporalSPDE, replicate = wTemporal.repl)"))
+
+      }
+
+      SpatiotemporalModel <- inla(fst, # Adding spatiotemporal effect
+                                  family = Family,
+                                  data = inla.stack.data(SocialStack),
+                                  control.compute = list(dic = TRUE),
+                                  control.predictor = list(A = inla.stack.A(SocialStack))
+      )
+
+      ReturnList$Spatial$SpatiotemporalModel <- SpatiotemporalModel
+
+    }
+  }
+
+  if(ReturnData){
+
+    ReturnList$Data <- Data
 
   }
 
