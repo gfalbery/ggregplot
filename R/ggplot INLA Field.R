@@ -1,6 +1,7 @@
 # ggplot for INLA fields ####
 
-ggField <- function(Model, Mesh, Groups = 1, GroupVar = NULL,
+ggField <- function(Model, Mesh,
+                    Groups = 1, GroupVar = NULL, GroupLabels = NULL,
                     Fill = "Discrete", FillAlpha = F,
                     Boundary = NULL, BoundaryWidth = 1,
                     Res = 300,
@@ -100,7 +101,20 @@ ggField <- function(Model, Mesh, Groups = 1, GroupVar = NULL,
                    aes(x, y))
   }
 
-  if(Groups>1) FieldPlot <- FieldPlot + facet_wrap( ~ Group) + theme(strip.background = element_rect(fill = "white"))
+  if(Groups>1){
+
+    if(!is.null(GroupLabels)){
+
+      FacetLabels <- GroupLabels
+
+    }else FacetLabels <- as.character(1:Groups)
+
+    names(FacetLabels) <- as.character(1:Groups)
+
+    FieldPlot <- FieldPlot + facet_wrap( ~ Group, labeller = as_labeller(FacetLabels)) +
+      theme(strip.background = element_rect(fill = "white"))
+
+  }
 
   if(!is.null(Points)){
 
