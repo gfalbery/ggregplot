@@ -150,13 +150,13 @@ INLAModelAdd <- function(Response, Explanatory, Add,
         }else{
 
           AllModelList[[length(AllModelList) + 1]] <-
-            AllModelList[[length(AllModelList)]][[Kept]]
+            AllModelList[[length(AllModelList)]][Kept]
 
           FullFormulaList[[length(FullFormulaList) + 1]] <-
-            FullFormulaList[[length(FullFormulaList)]][[Kept]]
+            FullFormulaList[[length(FullFormulaList)]][Kept]
 
           DICList[[length(DICList) + 1]] <-
-            DICList[[length(DICList)]][[Kept]]
+            DICList[[length(DICList)]][Kept]
 
           names(DICList[[length(DICList)]]) <- Kept
 
