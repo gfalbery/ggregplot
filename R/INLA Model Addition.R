@@ -1,12 +1,18 @@
-INLAModelAdd <- function(Response, Explanatory, Add,
+INLAModelAdd <- function(Response,
+                         Data,
+                         Explanatory = 1,
+                         Add = NULL,
                          Random = NULL,
                          Rounds = Inf,
                          Clashes = NULL,
                          AllModels = F, BaseModel = F,
-                         RandomModel = NULL, Family, Data, Delta = 2,
+                         RandomModel = NULL,
+                         Family = "gaussian",
+                         NTrials = 1,
+                         Delta = 2,
                          ReturnData = T,
                          AddSpatial = F, Coordinates = c("X", "Y"),
-                         Groups = F, GroupVar = NULL){
+                         Groups = F, GroupVar = NULL, GroupModel = "None"){
 
   require(INLA); require(ggplot2)
 
@@ -26,7 +32,7 @@ INLAModelAdd <- function(Response, Explanatory, Add,
   }
 
   Base <- inla(f1,
-               family = Family,
+               family = Family, Ntrials = NTrials,
                data = Data,
                control.compute = list(dic = TRUE))
 
@@ -36,156 +42,167 @@ INLAModelAdd <- function(Response, Explanatory, Add,
   DICList[["Base"]] <- Base$dic$dic
   FullFormulaList[["Base"]] <- f1
 
-  for(x in 1:length(Add)){
+  if(!is.null(Add)){
 
-    "Adding: " %>% paste0(Add[x]) %>% print
+    for(x in 1:length(Add)){
 
-    Explanatory3 <- paste(c(Explanatory, Add[x]), collapse = " + ")
+      "Adding: " %>% paste0(Add[x]) %>% print
 
-    if(!is.null(Random)){
+      Explanatory3 <- paste(c(Explanatory, Add[x]), collapse = " + ")
 
-      Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
-      f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+      if(!is.null(Random)){
 
-    }else{f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))}
+        Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
+        f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
 
-    Model1 <- inla(f2,
-                   family = Family,
-                   data = Data,
-                   control.compute = list(dic = TRUE))
+      }else{f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))}
 
-    ModelList[[Add[x]]] <- Model1
+      Model1 <- inla(f2,
+                     family = Family, Ntrials = NTrials,
+                     data = Data,
+                     control.compute = list(dic = TRUE))
 
-    FormulaList[[Add[x]]] <- f2
+      ModelList[[Add[x]]] <- Model1
 
-  }
+      FormulaList[[Add[x]]] <- f2
 
-  DICList[[2]] <- sapply(ModelList, function(y) y$dic$dic)
-  names(DICList[[2]]) <- Add
-  dDICList[[1]] <- DICList[[2]] - DICList[[1]]
-  names(dDICList[[1]]) <- Add
-  RemovedList[[1]] <- Add
+    }
 
-  FullFormulaList[[2]] <- FormulaList
+    DICList[[2]] <- sapply(ModelList, function(y) y$dic$dic)
+    names(DICList[[2]]) <- Add
+    dDICList[[1]] <- DICList[[2]] - DICList[[1]]
+    names(dDICList[[1]]) <- Add
+    RemovedList[[1]] <- Add
 
-  AllModelList[[1]] <- Base
-  AllModelList[[2]] <- ModelList
+    FullFormulaList[[2]] <- FormulaList
 
-  NewExplanatory <- Explanatory
+    AllModelList[[1]] <- Base
+    AllModelList[[2]] <- ModelList
 
-  Add2 <- Add
+    NewExplanatory <- Explanatory
 
-  KeptCovar <- c()
+    Add2 <- Add
 
-  if((min(dDICList[[length(dDICList)]]) < -Delta)&(Rounds>1)&(length(Add2)>0)){
+    KeptCovar <- c()
 
-    while((min(dDICList[[length(dDICList)]]) < -Delta)&(Rounds>1)&(length(Add2)>0)){
+    if((min(dDICList[[length(dDICList)]]) < -Delta)&(Rounds>1)&(length(Add2)>0)){
 
-      Rounds <- Rounds - 1
+      while((min(dDICList[[length(dDICList)]]) < -Delta)&(Rounds>1)&(length(Add2)>0)){
 
-      Kept <- Add2[which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))]
+        Rounds <- Rounds - 1
 
-      KeptCovar <- c(KeptCovar, Kept)
+        Kept <- Add2[which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))]
 
-      ModelList <- FormulaList <- list()
+        KeptCovar <- c(KeptCovar, Kept)
 
-      NewExplanatory <- c(NewExplanatory, Add2[which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))])
+        ModelList <- FormulaList <- list()
 
-      Add2 <- Add2[-which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))]
+        NewExplanatory <- c(NewExplanatory, Add2[which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))])
 
-      if(length(Add2)>0){
-
-        print(paste("Keeping", Kept))
-
-        print(Text <- paste("Run", length(DICList)))
-
-        if(Kept %in% unlist(Clashes)){
-
-          ClashRemove <- Clashes[Clashes %>% map_lgl(~Kept %in% .x)] %>% unlist
-
-          Add2 <- Add2 %>% setdiff(ClashRemove)
-
-          "Removing clashes: " %>% paste0(paste0(ClashRemove, collapse = "; ")) %>% print
-
-        }
+        Add2 <- Add2[-which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))]
 
         if(length(Add2)>0){
 
-          for(x in 1:length(Add2)){
+          print(paste("Keeping", Kept))
 
-            "Adding: " %>% paste0(Add2[x]) %>% print
+          print(Text <- paste("Run", length(DICList)))
 
-            Explanatory3 <- paste(c(NewExplanatory, Add2[x]), collapse = " + ")
+          if(Kept %in% unlist(Clashes)){
 
-            if(!is.null(Random)){
+            ClashRemove <- Clashes[Clashes %>% map_lgl(~Kept %in% .x)] %>% unlist
 
-              Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
-              f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+            Add2 <- Add2 %>% setdiff(ClashRemove)
 
-            }else{f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))}
-
-            Model1 <- inla(f2,
-                           family = Family,
-                           data = Data,
-                           control.compute = list(dic = TRUE))
-
-            ModelList[[Add2[x]]] <- Model1
-
-            FormulaList[[Add2[x]]] <- f2
-
-            #print(paste("Adding", Add2[x]))
+            "Removing clashes: " %>% paste0(paste0(ClashRemove, collapse = "; ")) %>% print
 
           }
 
-          AllModelList[[length(AllModelList) + 1]] <- ModelList
-          FullFormulaList[[length(FullFormulaList) + 1]] <- FormulaList
+          if(length(Add2)>0){
 
-          DICList[[length(DICList) + 1]] <- sapply(ModelList, function(y) y$dic$dic)
-          names(DICList[[length(DICList)]]) <- Add2
-          dDICList[[length(dDICList) + 1]] <- DICList[[length(DICList)]] - min(DICList[[length(DICList)-1]])
-          names(dDICList[[length(dDICList)]]) <- Add2
+            for(x in 1:length(Add2)){
 
-          RemovedList[[length(RemovedList) + 1]] <- Add2
+              "Adding: " %>% paste0(Add2[x]) %>% print
+
+              Explanatory3 <- paste(c(NewExplanatory, Add2[x]), collapse = " + ")
+
+              if(!is.null(Random)){
+
+                Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
+                f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+
+              }else{f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))}
+
+              Model1 <- inla(f2,
+                             family = Family, Ntrials = NTrials,
+                             data = Data,
+                             control.compute = list(dic = TRUE))
+
+              ModelList[[Add2[x]]] <- Model1
+
+              FormulaList[[Add2[x]]] <- f2
+
+              #print(paste("Adding", Add2[x]))
+
+            }
+
+            AllModelList[[length(AllModelList) + 1]] <- ModelList
+            FullFormulaList[[length(FullFormulaList) + 1]] <- FormulaList
+
+            DICList[[length(DICList) + 1]] <- sapply(ModelList, function(y) y$dic$dic)
+            names(DICList[[length(DICList)]]) <- Add2
+            dDICList[[length(dDICList) + 1]] <- DICList[[length(DICList)]] - min(DICList[[length(DICList)-1]])
+            names(dDICList[[length(dDICList)]]) <- Add2
+
+            RemovedList[[length(RemovedList) + 1]] <- Add2
+
+          }else{
+
+            AllModelList[[length(AllModelList) + 1]] <-
+              AllModelList[[length(AllModelList)]][Kept]
+
+            FullFormulaList[[length(FullFormulaList) + 1]] <-
+              FullFormulaList[[length(FullFormulaList)]][Kept]
+
+            DICList[[length(DICList) + 1]] <-
+              DICList[[length(DICList)]][Kept]
+
+            names(DICList[[length(DICList)]]) <- Kept
+
+            dDICList[[length(dDICList) + 1]] <-
+              min(dDICList[[length(dDICList)]])
+
+            names(dDICList[[length(dDICList)]]) <- Kept
+
+            RemovedList[[length(RemovedList) + 1]] <- Add2
+
+          }
+        }
+      }
+
+      if(length(dDICList)>0){
+
+        if(all(last(dDICList)< -Delta)){
+
+          FinalModel <- AllModelList[[length(AllModelList)]][[1]]
+          FinalFormula <- FullFormulaList[[length(AllModelList)]][[1]]
+
+          print(paste("Keeping Everything!"))
 
         }else{
 
-          AllModelList[[length(AllModelList) + 1]] <-
-            AllModelList[[length(AllModelList)]][Kept]
+          FinalModel <- AllModelList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]] == min(dDICList[[length(dDICList)-1]]))]]
+          FinalFormula <- FullFormulaList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]] == min(dDICList[[length(dDICList)-1]]))]]
 
-          FullFormulaList[[length(FullFormulaList) + 1]] <-
-            FullFormulaList[[length(FullFormulaList)]][Kept]
-
-          DICList[[length(DICList) + 1]] <-
-            DICList[[length(DICList)]][Kept]
-
-          names(DICList[[length(DICList)]]) <- Kept
-
-          dDICList[[length(dDICList) + 1]] <-
-            min(dDICList[[length(dDICList)]])
-
-          names(dDICList[[length(dDICList)]]) <- Kept
-
-          RemovedList[[length(RemovedList) + 1]] <- Add2
+          print(paste("Not Keeping ", paste(Add2, collapse = " ")))
 
         }
-      }
-    }
-
-    if(length(dDICList)>0){
-
-      if(all(last(dDICList)< -Delta)){
-
-        FinalModel <- AllModelList[[length(AllModelList)]][[1]]
-        FinalFormula <- FullFormulaList[[length(AllModelList)]][[1]]
-
-        print(paste("Keeping Everything!"))
 
       }else{
 
-        FinalModel <- AllModelList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]] == min(dDICList[[length(dDICList)-1]]))]]
-        FinalFormula <- FullFormulaList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]] == min(dDICList[[length(dDICList)-1]]))]]
+        FinalModel <- Base
+        FinalFormula <- f1
 
-        print(paste("Not Keeping ", paste(Add2, collapse = " ")))
+        print("Nothing Kept")
 
       }
 
@@ -203,7 +220,7 @@ INLAModelAdd <- function(Response, Explanatory, Add,
     FinalModel <- Base
     FinalFormula <- f1
 
-    print("Nothing Kept")
+    KeptCovar <- c()
 
   }
 
@@ -304,7 +321,7 @@ INLAModelAdd <- function(Response, Explanatory, Add,
       effects = EffectsList) # Leave
 
     SpatialModel <- inla(f1, # f2 + SPDE random effect
-                         family = Family,
+                         family = Family, Ntrials = NTrials,
                          data = inla.stack.data(SocialStack),
                          control.compute = list(dic = TRUE),
                          control.predictor = list(A = inla.stack.A(SocialStack))
@@ -324,18 +341,33 @@ INLAModelAdd <- function(Response, Explanatory, Add,
 
       NGroup <- max(Data$GroupVar)
 
-      TemporalA3 <- inla.spde.make.A(Mesh,
-                                     loc = Points,
-                                     repl = Data$GroupVar,
-                                     n.repl = NGroup) # Making A matrix
-
       TemporalSPDE = inla.spde2.pcmatern(mesh = Mesh,
                                          prior.range = c(10, 0.5),
                                          prior.sigma = c(.5, .5)) # Making SPDE
 
-      w.index.temporal <- inla.spde.make.index('wTemporal',
-                                               n.spde = TemporalSPDE$n.spde,
-                                               n.repl = NGroup)
+      if(GroupModel == "Rep"){
+
+        w.index.temporal <- inla.spde.make.index('wTemporal',
+                                                 n.spde = TemporalSPDE$n.spde,
+                                                 n.repl = NGroup)
+
+        TemporalA3 <- inla.spde.make.A(Mesh,
+                                       loc = Points,
+                                       repl = Data$GroupVar,
+                                       n.repl = NGroup) # Making A matrix
+
+      }else{
+
+        w.index.temporal <- inla.spde.make.index('wTemporal',
+                                                 n.spde = TemporalSPDE$n.spde,
+                                                 n.group = NGroup)
+
+        TemporalA3 <- inla.spde.make.A(Mesh,
+                                       loc = Points,
+                                       group = Data$GroupVar,
+                                       n.group = NGroup) # Making A matrix
+
+      }
 
       list(Intercept = rep(1, N), # Leave
            X = X) -> EffectsList
@@ -357,24 +389,45 @@ INLAModelAdd <- function(Response, Explanatory, Add,
         A = AList, # Vector of Multiplication factors
         effects = EffectsList) # Leave
 
-      if(!is.null(Random)){
+      if(GroupModel == "Rep"){
 
-        Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
+        if(!is.null(Random)){
 
-        fst <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
-                                 paste(colnames(X), " + ", Random2, collapse = " + "),
-                                 "+ f(wTemporal, model = TemporalSPDE, replicate = wTemporal.repl)"))
+          Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
+
+          fst <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
+                                   paste(colnames(X), " + ", Random2, collapse = " + "),
+                                   "+ f(wTemporal, model = TemporalSPDE, replicate = wTemporal.repl)"))
+
+        }else{
+
+          fst <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
+                                   paste(colnames(X), collapse = " + "),
+                                   "+ f(wTemporal, model = TemporalSPDE, replicate = wTemporal.repl)"))
+
+        }
 
       }else{
 
-        fst <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
-                                 paste(colnames(X), collapse = " + "),
-                                 "+ f(wTemporal, model = TemporalSPDE, replicate = wTemporal.repl)"))
+        if(!is.null(Random)){
 
+          Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
+
+          fst <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
+                                   paste(colnames(X), " + ", Random2, collapse = " + "),
+                                   "+ f(wTemporal, model = TemporalSPDE, group = wTemporal.group, control.group = list(model = '",GroupModel,"')"))
+
+        }else{
+
+          fst <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
+                                   paste(colnames(X), collapse = " + "),
+                                   "+ f(wTemporal, model = TemporalSPDE, group = wTemporal.group, control.group = list(model = '",GroupModel,"')"))
+
+        }
       }
 
       SpatiotemporalModel <- inla(fst, # Adding spatiotemporal effect
-                                  family = Family,
+                                  family = Family, Ntrials = NTrials,
                                   data = inla.stack.data(SocialStack),
                                   control.compute = list(dic = TRUE),
                                   control.predictor = list(A = inla.stack.A(SocialStack))
