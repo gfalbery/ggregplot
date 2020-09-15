@@ -3,6 +3,7 @@
 ggField <- function(Model, Mesh,
                     Groups = 1, GroupVar = NULL, GroupLabels = NULL,
                     Fill = "Discrete", FillAlpha = F,
+                    Scale = "Link", GrandMean = NULL,
                     Boundary = NULL, BoundaryWidth = 1,
                     Res = 300,
                     Points = NULL, PointAlpha = 1,
@@ -51,6 +52,13 @@ ggField <- function(Model, Mesh,
   } else{
 
     Full.Projection$Fill <- Full.Projection$value
+
+  }
+
+  if(Scale == "Binomial"){
+
+    Full.Projection %<>%
+      mutate_at("Fill", ~logistic(as.numeric(as.character(.x)) + GrandMean))
 
   }
 
