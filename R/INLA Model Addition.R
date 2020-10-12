@@ -12,7 +12,7 @@ INLAModelAdd <- function(Response,
                          Delta = 2,
                          ReturnData = T,
                          AddSpatial = F, Coordinates = c("X", "Y"),
-                         Groups = F, GroupVar = NULL, GroupModel = "None"){
+                         Groups = F, GroupVar = NULL, GroupModel = "Rep"){
 
   require(INLA); require(ggplot2)
 
@@ -32,7 +32,7 @@ INLAModelAdd <- function(Response,
   }
 
   Base <- inla(f1,
-               family = Family, Ntrials = NTrials,
+               family = Family, #Ntrials = NTrials,
                data = Data,
                control.compute = list(dic = TRUE))
 
@@ -274,13 +274,17 @@ INLAModelAdd <- function(Response,
 
     w.index <- inla.spde.make.index('w', n.spde = spde$n.spde)
 
-    BaseLevels <- GetBaseLevels(SubCovar, Data)
+    BaseLevels <- GetBaseLevels(SubCovar %>% intersect(names(Data)), Data)
 
     Xm <- model.matrix(as.formula(paste0("~ -1 +",
                                          paste(SubCovar, collapse = " + "))),
                        data = Data)
 
     X <- as.data.frame(Xm)[,!colnames(Xm)%in%BaseLevels]
+
+    X %<>% rename_all(~str_replace_all(.x, ":", "_"))
+
+    SubCovar %<>% str_replace_all(":", "_")
 
     if(!is.null(Random)){
 
@@ -415,13 +419,13 @@ INLAModelAdd <- function(Response,
 
           fst <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
                                    paste(colnames(X), " + ", Random2, collapse = " + "),
-                                   "+ f(wTemporal, model = TemporalSPDE, group = wTemporal.group, control.group = list(model = '",GroupModel,"')"))
+                                   " + f(wTemporal, model = TemporalSPDE, group = wTemporal.group, control.group = list(model = '",GroupModel,"'))"))
 
         }else{
 
           fst <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
                                    paste(colnames(X), collapse = " + "),
-                                   "+ f(wTemporal, model = TemporalSPDE, group = wTemporal.group, control.group = list(model = '",GroupModel,"')"))
+                                   " + f(wTemporal, model = TemporalSPDE, group = wTemporal.group, control.group = list(model = '",GroupModel,"'))"))
 
         }
       }
