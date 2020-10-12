@@ -248,9 +248,14 @@ INLAModelAdd <- function(Response,
 
     print("Adding Spatial!")
 
-    SubCovar <- c(Explanatory, KeptCovar) %>% setdiff("1")
+    FixedCovar <- c(Explanatory, KeptCovar) %>% setdiff("1") %>% intersect(colnames(Data))
+    RandomAdd <- c(Explanatory, KeptCovar) %>% setdiff("1") %>% setdiff(colnames(Data))
 
-    print(SubCovar)
+    RandomVar <- RandomAdd %>% str_split("f[(]") %>% map_chr(2) %>%
+      str_split(", ") %>% map_chr(1) %>%
+      str_trim()
+
+    print(FixedCovar %>% c(RandomAdd))
 
     Points <- Data %>% dplyr::select(all_of(Coordinates)) %>%
       as.data.frame
@@ -274,33 +279,37 @@ INLAModelAdd <- function(Response,
 
     w.index <- inla.spde.make.index('w', n.spde = spde$n.spde)
 
-    BaseLevels <- GetBaseLevels(SubCovar %>% intersect(names(Data)), Data)
+    BaseLevels <- GetBaseLevels(FixedCovar %>% intersect(names(Data)), Data)
 
     Xm <- model.matrix(as.formula(paste0("~ -1 +",
-                                         paste(SubCovar, collapse = " + "))),
+                                         paste(FixedCovar, collapse = " + "))),
                        data = Data)
 
     X <- as.data.frame(Xm)[,!colnames(Xm)%in%BaseLevels]
 
     X %<>% rename_all(~str_replace_all(.x, ":", "_"))
 
-    SubCovar %<>% str_replace_all(":", "_")
+    FixedCovar %<>% str_replace_all(":", "_")
+
+    FormulaCovar <- colnames(X)
 
     if(!is.null(Random)){
 
       Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
 
-      f1 <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
-                              paste(colnames(X), " + ", Random2, collapse = " + "),
-                              "+ f(w, model = spde)"))
-
-    }else{
-
-      f1 <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
-                              paste(colnames(X), collapse = " + "),
-                              "+ f(w, model = spde)"))
+      FormulaCovar <- FormulaCovar %>% c(Random2)
 
     }
+
+    if(!is.null(RandomAdd)){
+
+      FormulaCovar <- FormulaCovar %>% c(RandomAdd)
+
+    }
+
+    f1 <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
+                            paste(FormulaCovar, collapse = " + "),
+                            "+ f(w, model = spde)"))
 
     N <- nrow(Data)
 
@@ -311,6 +320,13 @@ INLAModelAdd <- function(Response,
 
       EffectsList[Random] <-
         map(Random, ~Data[,.x])
+
+    }
+
+    if(!is.null(RandomAdd)){
+
+      EffectsList[RandomVar] <-
+        map(RandomVar, ~Data[,.x])
 
     }
 
