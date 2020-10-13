@@ -11,7 +11,7 @@ INLAModelAdd <- function(Response,
                          NTrials = 1,
                          Delta = 2,
                          ReturnData = T,
-                         AddSpatial = F, Coordinates = c("X", "Y"),
+                         AddSpatial = F, Coordinates = c("X", "Y"), Boundary = NULL,
                          Groups = F, GroupVar = NULL, GroupModel = "Rep"){
 
   require(INLA); require(ggplot2)
@@ -255,7 +255,7 @@ INLAModelAdd <- function(Response,
       str_split(", ") %>% map_chr(1) %>%
       str_trim()
 
-    print(FixedCovar %>% c(RandomAdd))
+    print(FixedCovar %>% c(RandomVar))
 
     Points <- Data %>% dplyr::select(all_of(Coordinates)) %>%
       as.data.frame
@@ -268,6 +268,7 @@ INLAModelAdd <- function(Response,
     Points %<>% as.matrix
 
     Mesh <- inla.mesh.2d(loc = Points,
+                         boundary = Boundary,
                          max.edge = NullRangePrior/10,
                          cutoff = NullRangePrior/20)
 
