@@ -248,14 +248,20 @@ INLAModelAdd <- function(Response,
 
     print("Adding Spatial!")
 
-    FixedCovar <- c(Explanatory, KeptCovar) %>% setdiff("1") %>% intersect(colnames(Data))
+    FixedCovar <- c(Explanatory, KeptCovar) %>% setdiff("1")# %>% intersect(colnames(Data))
+    FixedCovar <- FixedCovar[!(FixedCovar %>% str_detect("f[(]"))]
+
     RandomAdd <- c(Explanatory, KeptCovar) %>% setdiff("1") %>% setdiff(colnames(Data))
 
-    RandomVar <- RandomAdd %>% str_split("f[(]") %>% map_chr(2) %>%
-      str_split(", ") %>% map_chr(1) %>%
-      str_trim()
+    RandomAdd <- RandomAdd[RandomAdd %>% str_detect("f[(]")]
 
-    print(FixedCovar %>% c(RandomVar))
+    if(length(RandomAdd)>0){
+
+      RandomVar <- RandomAdd %>% str_split("f[(]") %>% map_chr(2) %>%
+        str_split(", ") %>% map_chr(1) %>%
+        str_trim()
+
+    }else RandomAdd <- NULL
 
     Points <- Data %>% dplyr::select(all_of(Coordinates)) %>%
       as.data.frame
@@ -281,6 +287,7 @@ INLAModelAdd <- function(Response,
     w.index <- inla.spde.make.index('w', n.spde = spde$n.spde)
 
     BaseLevels <- GetBaseLevels(FixedCovar %>% intersect(names(Data)), Data)
+
 
     Xm <- model.matrix(as.formula(paste0("~ -1 +",
                                          paste(FixedCovar, collapse = " + "))),
