@@ -11,7 +11,7 @@ Efxplot <- function(ModelList,
 
   require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm)
 
-  graphlist<-list()
+  Graphlist<-list()
 
   if(!class(ModelList) == "list"){
     ModelList <- list(ModelList)
@@ -21,74 +21,76 @@ Efxplot <- function(ModelList,
     model<-ModelList[[i]]
 
     if(class(model) == "inla"){
-      graph<-as.data.frame(summary(model)$fixed)
-      colnames(graph)[which(colnames(graph)%in%c("0.025quant","0.975quant"))]<-c("Lower","Upper")
-      colnames(graph)[which(colnames(graph)%in%c("0.05quant","0.95quant"))]<-c("Lower","Upper")
-      colnames(graph)[which(colnames(graph)%in%c("mean"))]<-c("Estimate")
+      Graph<-as.data.frame(summary(model)$fixed)
+      colnames(Graph)[which(colnames(Graph)%in%c("0.025quant","0.975quant"))]<-c("Lower","Upper")
+      colnames(Graph)[which(colnames(Graph)%in%c("0.05quant","0.95quant"))]<-c("Lower","Upper")
+      colnames(Graph)[which(colnames(Graph)%in%c("mean"))]<-c("Estimate")
     }
 
     if(class(model) == "MCMCglmm"){
-      graph<-as.data.frame(summary(model)$solutions)
-      colnames(graph)[1:3]<-c("Estimate","Lower","Upper")
+      Graph<-as.data.frame(summary(model)$solutions)
+      colnames(Graph)[1:3]<-c("Estimate","Lower","Upper")
     }
 
-    graph$Model<-i
-    graph$Factor<-rownames(graph)
+    Graph$Model<-i
+    Graph$Factor<-rownames(Graph)
 
-    graphlist[[i]]<-graph
+    Graphlist[[i]]<-Graph
 
   }
 
-  graph <- bind_rows(graphlist)
+  Graph <- bind_rows(Graphlist)
 
-  graph$Sig <- with(graph, ifelse(Lower*Upper>0, "*", ""))
+  Graph$Sig <- with(Graph, ifelse(Lower*Upper>0, "*", ""))
 
-  graph$Model <- as.factor(graph$Model)
+  Graph$Model <- as.factor(Graph$Model)
 
   if(!is.null(ModelNames)){
-    levels(graph$Model)<-ModelNames
+    levels(Graph$Model)<-ModelNames
   }
 
-  position <- ifelse(length(unique(graph$Model))  ==  1, "none", "right")
+  position <- ifelse(length(unique(Graph$Model))  ==  1, "none", "right")
 
-  if(is.null(VarOrder)) VarOrder <- rev(unique(graph$Factor))
+  if(is.null(VarOrder)) VarOrder <- rev(unique(Graph$Factor))
   if(is.null(VarNames)) VarNames <- VarOrder
 
-  graph$Factor <- factor(graph$Factor, levels = VarOrder)
-  levels(graph$Factor) <- VarNames
+  Graph$Factor <- factor(Graph$Factor, levels = VarOrder)
+  levels(Graph$Factor) <- VarNames
+
+  Graph %<>% as.data.frame %>% filter(!is.na(Factor))
 
   if(!Intercept){
 
     VarNames <- VarNames[!str_detect(VarNames, "ntercept")]
 
-    graph <- graph %>% filter(Factor %in% VarNames)
+    Graph <- Graph %>% filter(Factor %in% VarNames)
 
   }
 
-  graph$starloc <- NA
+  Graph$starloc <- NA
 
-  min<-min(graph$Lower,na.rm = T)
-  max<-max(graph$Upper,na.rm = T)
+  min<-min(Graph$Lower,na.rm = T)
+  max<-max(Graph$Upper,na.rm = T)
 
   if(Sig == TRUE){
 
-    graph$starloc <- max + (max - min)/10
+    Graph$starloc <- max + (max - min)/10
 
   }
 
   if(!is.null(StarLoc)){
 
-    graph$starloc <- StarLoc
+    Graph$starloc <- StarLoc
 
   }
 
-  graph$Alpha <- with(graph, ifelse(Lower*Upper>0, Alpha1, Alpha2))
+  Graph$Alpha <- with(Graph, ifelse(Lower*Upper>0, Alpha1, Alpha2))
 
-  graph %>%
+  Graph %>%
     mutate(SigAlpha = factor(as.numeric(Lower*Upper > 0),
                              levels = c(1, 0))) ->
 
-    graph
+    Graph
 
   if(PointOutline){
 
@@ -100,7 +102,7 @@ Efxplot <- function(ModelList,
 
   }
 
-  ggplot(as.data.frame(graph),
+  ggplot(Graph,
          aes(x = as.factor(Factor),
              y = Estimate,
              group = Model,
