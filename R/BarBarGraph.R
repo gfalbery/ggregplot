@@ -17,6 +17,10 @@ data_summary <- function(data, varname, groupnames){
 
 BarBarGraph <- function(data,group,x,y){
 
+  require(magrittr)
+
+  data %<>% as.data.frame
+
   df2 <- na.omit(data.frame(cbind(data_summary(data,varname = x,groupnames = group),
                                   data_summary(data,varname = y,groupnames = group)[,c(y,"se")])))
 

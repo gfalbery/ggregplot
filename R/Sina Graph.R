@@ -8,7 +8,9 @@ SinaGraph <- function(df, x, y, z = x,
                       Sina = T, Violin = F,
                       ColourGroups = F){
 
-  require(ggplot2); require(dplyr); require(ggforce)
+  require(ggplot2); require(dplyr); require(ggforce); require(magrittr)
+
+  df %<>% as.data.frame
 
   df <- df[,c(x,y,z)] %>% na.omit()
 

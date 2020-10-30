@@ -6,9 +6,11 @@ BarGraph <- function(df, x, y, z = x,
                      TextSize = F,
                      Fun = mean){
 
-  require(ggplot2); require(dplyr); require(ggforce)
+  require(ggplot2); require(dplyr); require(ggforce); require(magrittr)
 
   BarFun <- Fun
+
+  df %<>% as.data.frame
 
   df <- df[,c(x,y,z)] %>% na.omit()
 
