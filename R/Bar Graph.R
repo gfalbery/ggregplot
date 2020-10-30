@@ -14,9 +14,22 @@ BarGraph <- function(df, x, y, z = x,
 
   df <- df[,c(x,y,z)] %>% na.omit()
 
-  df$X <- as.factor(df[,x])
+  df$X <- df[,x]
+
+  if(!is.factor(df[,x])){
+
+    df$X %<>% factor(levels = sort(unique(df[,x])))
+
+  }
+
   df$Y <- df[,y]
-  df$Colour <- as.factor(df[,z])
+  df$Colour <- df[,z]
+
+  if(!is.factor(df[,z])){
+
+    df$Colour %<>% factor(levels = sort(unique(df[,z])))
+
+  }
 
   Errordf <- df %>% group_by(X, Colour) %>%
     summarise(Mean = BarFun(Y, na.rm = T),
