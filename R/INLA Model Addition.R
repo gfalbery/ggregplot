@@ -16,7 +16,8 @@ INLAModelAdd <- function(Response,
 
   require(INLA); require(ggplot2)
 
-  Data %<>% as.data.frame
+  Data %<>% as.data.frame %>%
+    mutate_if(is.character, as.factor)
 
   Explanatory2 <- paste(Explanatory, collapse = " + ")
 
@@ -41,6 +42,14 @@ INLAModelAdd <- function(Response,
 
   DICList[["Base"]] <- Base$dic$dic
   FullFormulaList[["Base"]] <- f1
+
+  AddList <- Add
+
+  if(class(Add) == "list"){
+
+    Add %<>% map_chr(~paste0(.x, collapse = " + "))
+
+  }
 
   if(!is.null(Add)){
 
@@ -110,6 +119,8 @@ INLAModelAdd <- function(Response,
           if(Kept %in% unlist(Clashes)){
 
             ClashRemove <- Clashes[Clashes %>% map_lgl(~Kept %in% .x)] %>% unlist
+
+            # AddList %>% map_lgl(~)
 
             Add2 <- Add2 %>% setdiff(ClashRemove)
 
