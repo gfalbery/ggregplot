@@ -227,6 +227,8 @@ INLAModelAdd <- function(Response,
   ReturnList <- list(FinalModel = FinalModel,
                      # AllModels = AllModelList,
                      Removed = RemovedList,
+                     Explanatory = Explanatory,
+                     Kept = KeptCovar,
                      DIC = DICList,
                      dDIC = dDICList,
                      FormulaList = FullFormulaList,
@@ -288,12 +290,19 @@ INLAModelAdd <- function(Response,
 
     BaseLevels <- GetBaseLevels(FixedCovar %>% intersect(names(Data)), Data)
 
+    if(length(FixedCovar) > 0){
 
-    Xm <- model.matrix(as.formula(paste0("~ -1 +",
-                                         paste(FixedCovar, collapse = " + "))),
-                       data = Data)
+      Xm <- model.matrix(as.formula(paste0("~ -1 +",
+                                           paste(FixedCovar, collapse = " + "))),
+                         data = Data)
 
-    X <- as.data.frame(Xm)[,!colnames(Xm)%in%BaseLevels]
+      X <- as.data.frame(Xm)[,!colnames(Xm)%in%BaseLevels]
+
+    }else{
+
+      X <- data.frame(Intercept = rep(1, nrow(Data)))
+
+    }
 
     X %<>% rename_all(~str_replace_all(.x, ":", "_"))
 
@@ -315,9 +324,18 @@ INLAModelAdd <- function(Response,
 
     }
 
-    f1 <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
-                            paste(FormulaCovar, collapse = " + "),
-                            "+ f(w, model = spde)"))
+    if(length(FormulaCovar)>0){
+
+      f1 <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
+                              paste(FormulaCovar, collapse = " + "),
+                              "+ f(w, model = spde)"))
+
+    }else{
+
+      f1 <- as.formula(paste0("y", " ~ - 1 + Intercept + ",
+                              "f(w, model = spde)"))
+
+    }
 
     N <- nrow(Data)
 
