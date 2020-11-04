@@ -116,13 +116,19 @@ INLAModelAdd <- function(Response,
 
           print(Text <- paste("Run", length(DICList)))
 
-          if(Kept %in% unlist(Clashes)){
+          KeptSplit <- Kept %>% str_split(" [+] ") %>% unlist %>% as.character
 
-            ClashRemove <- Clashes[Clashes %>% map_lgl(~Kept %in% .x)] %>% unlist
+          if(any(KeptSplit %in% unlist(Clashes))){
 
-            # AddList %>% map_lgl(~)
+            ClashRemove <-
+              Clashes[Clashes %>% map_lgl(~any(KeptSplit %in% .x))] %>%
+              unlist %>% unique
 
-            Add2 <- Add2 %>% setdiff(ClashRemove)
+            Add2 <-
+              AddList[!AddList %>%
+                              map_lgl(~any(ClashRemove %in% .x))] %>%
+              map_chr(~paste0(.x, collapse = " + ")) %>%
+                intersect(Add2)
 
             "Removing clashes: " %>% paste0(paste0(ClashRemove, collapse = "; ")) %>% print
 
