@@ -43,6 +43,14 @@ ggField <- function(Model, Mesh,
 
   }
 
+  Full.Projection$Group <- rep(1:Groups, each = Dim1)
+
+  if(length(GrandMean) == Groups){
+
+    GrandMean %<>% rep(each = Dim1)
+
+  }
+
   if(FitScale == "Binomial"&Round == "Before"){
 
     Full.Projection %<>%
@@ -76,8 +84,6 @@ ggField <- function(Model, Mesh,
     }
 
   }
-
-  Full.Projection$Group <- rep(1:Groups, each = Dim1)
 
   Full.Projection <- na.omit(Full.Projection)
 
