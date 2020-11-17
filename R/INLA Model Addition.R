@@ -11,6 +11,7 @@ INLAModelAdd <- function(Response,
                          NTrials = 1,
                          Delta = 2,
                          ReturnData = T,
+                         Beep = F,
                          AddSpatial = F, Coordinates = c("X", "Y"), Boundary = NULL,
                          Groups = F, GroupVar = NULL, GroupModel = "Rep"){
 
@@ -77,6 +78,18 @@ INLAModelAdd <- function(Response,
 
     }
 
+    ModelList %>% MDIC %>% unlist -> DICValues
+
+    names(DICValues) <- Add
+
+    if(any(!is.finite(DICValues))){
+
+      print("Warning: Null DIC Values")
+
+      print(DICValues)
+
+    }
+
     DICList[[2]] <- sapply(ModelList, function(y) y$dic$dic)
     names(DICList[[2]]) <- Add
     dDICList[[1]] <- DICList[[2]] - DICList[[1]]
@@ -126,9 +139,9 @@ INLAModelAdd <- function(Response,
 
             Add2 <-
               AddList[!AddList %>%
-                              map_lgl(~any(ClashRemove %in% .x))] %>%
+                        map_lgl(~any(ClashRemove %in% .x))] %>%
               map_chr(~paste0(.x, collapse = " + ")) %>%
-                intersect(Add2)
+              intersect(Add2)
 
             "Removing clashes: " %>% paste0(paste0(ClashRemove, collapse = "; ")) %>% print
 
@@ -165,7 +178,19 @@ INLAModelAdd <- function(Response,
             AllModelList[[length(AllModelList) + 1]] <- ModelList
             FullFormulaList[[length(FullFormulaList) + 1]] <- FormulaList
 
-            DICList[[length(DICList) + 1]] <- sapply(ModelList, function(y) y$dic$dic)
+            ModelList %>% MDIC %>% unlist -> DICValues
+
+            names(DICValues) <- Add2
+
+            if(any(!is.finite(DICValues))){
+
+              print("Warning: Null DIC Values")
+
+              print(DICValues)
+
+            }
+
+            DICList[[length(DICList) + 1]] <- DICValues
             names(DICList[[length(DICList)]]) <- Add2
             dDICList[[length(dDICList) + 1]] <- DICList[[length(DICList)]] - min(DICList[[length(DICList)-1]])
             names(dDICList[[length(dDICList)]]) <- Add2
@@ -506,6 +531,8 @@ INLAModelAdd <- function(Response,
     ReturnList$Data <- Data
 
   }
+
+  if(Beep) beepr::beep()
 
   return(ReturnList)
 
