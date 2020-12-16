@@ -361,7 +361,7 @@ INLAFit <- function(Model, TestDF,
 
         1:NDraw %>% map(~{
 
-          EstimateList[[.x]] * TMatrix %>% t
+          (EstimateList[[.x]] * TMatrix) %>% t
 
         }) -> PredictionList
 
