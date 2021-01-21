@@ -310,23 +310,27 @@ INLAModelAdd <- function(Response,
 
     }else RandomAdd <- NULL
 
-    i <- 1
-
     if(class(Coordinates) == "list"){
-
-      SubCoordinates <- Coordinates[[i]]
 
       CoordinateNumber <- length(Coordinates)
 
+      SubCoordinates <- Coordinates[[1]]
+
     }else{
 
-      SubCoordinates <- Coordinates
-
       CoordinateNumber <- 1
+
+      SubCoordinates <- Coordinates
 
     }
 
     for(i in 1:CoordinateNumber){
+
+      if(i > 1){
+
+        SubCoordinates <- Coordinates[[i]]
+
+      }
 
       Points <- Data %>% dplyr::select(all_of(SubCoordinates)) %>%
         as.data.frame
