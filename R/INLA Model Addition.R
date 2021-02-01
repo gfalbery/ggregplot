@@ -444,6 +444,8 @@ INLAModelAdd <- function(Response,
                           Mesh = Mesh,
                           SPDE = spde)
 
+      FullSpatialList <- SpatialList
+
       if(Groups == T){
 
         print("Spatiotemporal!")
@@ -557,9 +559,10 @@ INLAModelAdd <- function(Response,
         }
       }
     }
-  }
 
-  ReturnList$Spatial <- FullSpatialList
+    ReturnList$Spatial <- FullSpatialList
+
+  }
 
   if(ReturnData){
 
