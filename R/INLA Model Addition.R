@@ -365,7 +365,7 @@ INLAModelAdd <- function(Response,
                                              paste(FixedCovar, collapse = " + "))),
                            data = Data)
 
-        X <- as.data.frame(Xm)[,!colnames(Xm)%in%BaseLevels]
+        X <- as_tibble(Xm)[,!colnames(Xm)%in%BaseLevels] %>% as.data.frame()
 
       }else{
 
@@ -446,7 +446,7 @@ INLAModelAdd <- function(Response,
                           Mesh = Mesh,
                           SPDE = spde)
 
-      FullSpatialList <- SpatialList
+      # FullSpatialList <- SpatialList
 
       if(Groups == T){
 
@@ -550,16 +550,18 @@ INLAModelAdd <- function(Response,
 
         SpatialList$SpatiotemporalModel <- SpatiotemporalModel
 
-        if(CoordinateNumber>1){
-
-          FullSpatialList[[i]] <- SpatialList
-
-        }else{
-
-          FullSpatialList <- SpatialList
-
-        }
       }
+
+      if(CoordinateNumber>1){
+
+        FullSpatialList[[i]] <- SpatialList
+
+      }else{
+
+        FullSpatialList <- SpatialList
+
+      }
+
     }
 
     ReturnList$Spatial <- FullSpatialList
