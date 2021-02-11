@@ -326,6 +326,8 @@ INLAModelAdd <- function(Response,
 
     for(i in 1:CoordinateNumber){
 
+      print(paste0("Fitting Spatial Field ", i, "!"))
+
       if(i > 1){
 
         SubCoordinates <- Coordinates[[i]]
