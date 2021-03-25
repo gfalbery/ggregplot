@@ -21,7 +21,7 @@ INLAModelAdd <- function(Response,
 
   if(ScaleVariables){
 
-    Classes <- Data %>% dplyr::select(Explanatory) %>% sapply(class)
+    Classes <- Data %>% dplyr::select(Explanatory, Add) %>% sapply(class)
 
     ToScale <- names(Classes[Classes %in% c("integer", "numeric")])
 
