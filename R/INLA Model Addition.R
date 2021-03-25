@@ -1,25 +1,42 @@
 INLAModelAdd <- function(Response,
                          Data,
-                         Explanatory = 1,
+                         Explanatory = 1, ScaleVariables = T,
                          Add = NULL,
-                         Random = NULL,
-                         Rounds = Inf,
+                         Random = NULL,RandomModel = NULL,
+                         Rounds = Inf, Delta = 2,
                          Clashes = NULL,
-                         AllModels = F, BaseModel = F,
-                         RandomModel = NULL,
-                         Family = "gaussian",
-                         NTrials = 1,
-                         Delta = 2,
-                         ReturnData = T,
-                         Beep = F,
-                         AddSpatial = F, Coordinates = c("X", "Y"),
-                         Boundary = NULL,
+                         ReturnData = T, AllModels = F, BaseModel = F,
+                         Family = "gaussian", NTrials = 1,
+
+                         Beep = T,
+
+                         AddSpatial = F, Coordinates = c("X", "Y"), Boundary = NULL,
+
                          Groups = F, GroupVar = NULL, GroupModel = "Rep"){
 
   require(INLA); require(ggplot2)
 
   Data %<>% as.data.frame %>%
     mutate_if(is.character, as.factor)
+
+  if(ScaleVariables){
+
+    Classes <- Data %>% dplyr::select(Explanatory) %>% sapply(class)
+
+    ToScale <- names(Classes[Classes %in% c("integer", "numeric")])
+
+    Data[,paste0(ToScale, ".Original")] <- Data[,ToScale]
+
+    Data %<>% mutate_at(ToScale, ~c(scale(.x)))
+
+    if(Family == "gaussian"){
+
+      Data[,paste0(Resp, ".Original")] <- Data[,Resp]
+
+      Data %<>% mutate_at(Resp, ~c(scale(.x)))
+
+    }
+  }
 
   Explanatory2 <- paste(Explanatory, collapse = " + ")
 
