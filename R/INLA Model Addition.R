@@ -12,7 +12,9 @@ INLAModelAdd <- function(Response,
 
                          AddSpatial = F, Coordinates = c("X", "Y"), Boundary = NULL,
 
-                         Groups = F, GroupVar = NULL, GroupModel = "Rep"){
+                         Groups = F, GroupVar = NULL, GroupModel = "Rep",
+
+                         ...){
 
   require(INLA); require(ggplot2)
 
@@ -33,9 +35,9 @@ INLAModelAdd <- function(Response,
 
     if(Family == "gaussian"){
 
-      Data[,paste0(Resp, ".Original")] <- Data[,Resp]
+      Data[,paste0(Response, ".Original")] <- Data[,Response]
 
-      Data %<>% mutate_at(Resp, ~c(scale(.x)))
+      Data %<>% mutate_at(Response, ~c(scale(.x)))
 
     }
   }

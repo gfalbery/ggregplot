@@ -1,6 +1,9 @@
 
+INLAModelSel <- function(Response,
+                         Explanatory,
+                         Random = NULL, RandomModel = NULL, Family, Data, Delta = 2,
 
-INLAModelSel <- function(Response, Explanatory, Random = NULL, RandomModel = NULL, Family, Data, Delta = 2){
+                         ...){
 
   require(INLA); require(ggplot2)
 
