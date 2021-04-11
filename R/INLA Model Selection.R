@@ -1,33 +1,65 @@
 
 INLAModelSel <- function(Response,
                          Explanatory,
-                         Random = NULL, RandomModel = NULL, Family, Data, Delta = 2,
+                         Random = NULL, RandomModel = NULL,
+                         Family, Data, Delta = 2,
+
+                         AllModels = F, FullModel = F,
+                         ReturnData = T,
+                         Beep = T,
 
                          ...){
 
   require(INLA); require(ggplot2)
 
+  Data %<>% as.data.frame %>%
+    mutate_if(is.character, as.factor)
+
+  if(ScaleVariables){
+
+    Classes <- Data %>%
+      dplyr::select(Explanatory, intersect(Add, colnames(Data))) %>%
+      sapply(class)
+
+    ToScale <- names(Classes[Classes %in% c("integer", "numeric")])
+
+    Data[,paste0(ToScale, ".Original")] <- Data[,ToScale]
+
+    Data %<>% mutate_at(ToScale, ~c(scale(.x)))
+
+    if(Family == "gaussian"){
+
+      Data[,paste0(Response, ".Original")] <- Data[,Response]
+
+      Data %<>% mutate_at(Response, ~c(scale(.x)))
+
+    }
+  }
+
   Explanatory2 <- paste(Explanatory, collapse = " + ")
 
   if(!is.null(Random)){
+
     Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")
 
     f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, " + ", Random2, collapse = " + ")))
+
   }else{
+
     f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, collapse = " + ")))
+
   }
 
-  FullModel <-   inla(f1,
-                      family = Family,
-                      data = Data,
-                      control.compute = list(dic = TRUE))
+  FullModel <- inla(f1,
+                    family = Family,
+                    data = Data,
+                    control.compute = list(dic = TRUE))
 
   ModelList <- AllModelList <- RemovedList <- FullFormulaList <- FormulaList <- list()
   DICList <- dDICList <- list()
 
   DICList[[1]] <- FullModel$dic$dic
   FullFormulaList[[1]] <- f1
-
 
   for(x in 1:length(Explanatory)){
 
@@ -36,7 +68,9 @@ INLAModelSel <- function(Response,
     if(!is.null(Random)){
 
       f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+
     } else{
+
       f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))
 
     }
@@ -53,10 +87,14 @@ INLAModelSel <- function(Response,
   }
 
   DICList[[2]] <- sapply(ModelList, function(y) y$dic$dic)
+
   names(DICList[[2]]) <- Explanatory
+
   dDICList[[1]] <- DICList[[2]] - DICList[[1]]
-  names(dDICList[[1]]) <- Explanatory
-  RemovedList[[1]] <- Explanatory
+
+  names(dDICList[[1]]) <-
+    RemovedList[[1]] <-
+    Explanatory
 
   FullFormulaList[[2]] <- FormulaList
 
@@ -65,16 +103,18 @@ INLAModelSel <- function(Response,
 
   NewExplanatory <- Explanatory
 
-  while(min(dDICList[[length(dDICList)]]) < Delta&length(NewExplanatory)>0){
+  while((min(last(dDICList)) < Delta) & (length(NewExplanatory)>0)){
 
-    print(paste("Losing", names(dDICList[[length(dDICList)]])[which(dDICList[[length(dDICList)]] == min(dDICList[[length(dDICList)]]))]))
+    print(paste("Losing", names(last(dDICList))[which(last(dDICList) == min(last(dDICList)))]))
+
     print(Text <- paste("Run", length(DICList)))
 
     ModelList <- FormulaList <- list()
 
-    NewExplanatory <- NewExplanatory[-which(dDICList[[length(dDICList)]]==min(dDICList[[length(dDICList)]]))]
+    NewExplanatory <- NewExplanatory[-which(last(dDICList)==min(last(dDICList)))]
 
     if(length(NewExplanatory) > 0){
+
       for(x in 1:length(NewExplanatory)){
 
         Explanatory3 <- paste(NewExplanatory[-x], collapse = " + ")
@@ -82,7 +122,9 @@ INLAModelSel <- function(Response,
         if(!is.null(Random)){
 
           f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+
         } else{
+
           f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))
 
         }
@@ -103,7 +145,9 @@ INLAModelSel <- function(Response,
       if(!is.null(Random)){
 
         f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, " + ", Random2, collapse = " + ")))
+
       } else{
+
         f2 <- as.formula(paste0(Response, " ~ ", paste(Explanatory3, collapse = " + ")))
 
       }
@@ -123,23 +167,51 @@ INLAModelSel <- function(Response,
     FullFormulaList[[length(FullFormulaList)+1]] <- FormulaList
 
     DICList[[length(DICList)+1]] <- sapply(ModelList, function(y) y$dic$dic)
-    names(DICList[[length(DICList)]]) <- NewExplanatory
-    dDICList[[length(dDICList)+1]] <- DICList[[length(DICList)]] - min(DICList[[length(DICList)-1]])
-    names(dDICList[[length(dDICList)]]) <- NewExplanatory
 
-    RemovedList[[length(RemovedList)+1]] <- NewExplanatory
+    names(DICList[[length(DICList)]]) <- NewExplanatory
+
+    dDICList[[length(dDICList)+1]] <- DICList[[length(DICList)]] - min(DICList[[length(DICList)-1]])
+
+    names(dDICList[[length(dDICList)]]) <-
+      RemovedList[[length(RemovedList)+1]] <-
+      NewExplanatory
 
   }
 
   FinalModel <- AllModelList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]]==min(dDICList[[length(dDICList)-1]]))]]
+
   FinalFormula <- FullFormulaList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]]==min(dDICList[[length(dDICList)-1]]))]]
 
-  return(list(FinalModel = FinalModel,
-              AllModels = AllModelList,
-              Removed = RemovedList,
-              DIC = DICList,
-              dDIC = dDICList,
-              FormulaList = FullFormulaList,
-              FinalFormula = FinalFormula))
+  ReturnList <- list(FinalModel = FinalModel,
+                     AllModels = AllModelList,
+                     Removed = RemovedList,
+                     DIC = DICList,
+                     dDIC = dDICList,
+                     FormulaList = FullFormulaList,
+                     FinalFormula = FinalFormula)
+
+
+  if(AllModels){
+
+    ReturnList$AllModels <- AllModelList
+
+  }
+
+  if(FullModel){
+
+    ReturnList$FullModel <- FullModel
+
+  }
+
+  if(ReturnData){
+
+    ReturnList$Data <- Data
+
+  }
+
+  if(Beep) beepr::beep()
+
+  return(ReturnList)
+
 }
 
