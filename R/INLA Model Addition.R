@@ -2,7 +2,7 @@ INLAModelAdd <- function(Response,
                          Data,
                          Explanatory = 1, ScaleVariables = T,
                          Add = NULL,
-                         Random = NULL,RandomModel = NULL,
+                         Random = NULL, RandomModel = NULL,
                          Rounds = Inf, Delta = 2,
                          Clashes = NULL,
                          ReturnData = T, AllModels = F, BaseModel = F,
@@ -16,7 +16,11 @@ INLAModelAdd <- function(Response,
 
                          ...){
 
-  require(INLA); require(ggplot2)
+  require(INLA); require(ggplot2); require(magrittr)
+
+  print(paste0("Response: ", Response))
+  print(paste0("Explanatory: ", paste0(Explanatory, collapse = ", ")))
+  if(ScaleVariables) print("Scaling variables to SD and mean")
 
   Data %<>% as.data.frame %>%
     mutate_if(is.character, as.factor)
@@ -24,7 +28,8 @@ INLAModelAdd <- function(Response,
   if(ScaleVariables){
 
     Classes <- Data %>%
-      dplyr::select(Explanatory, intersect(Add, colnames(Data))) %>%
+      dplyr::select(intersect(Explanatory, colnames(Data)),
+                    intersect(Add, colnames(Data))) %>%
       sapply(class)
 
     ToScale <- names(Classes[Classes %in% c("integer", "numeric")])
