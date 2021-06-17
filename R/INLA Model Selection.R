@@ -3,6 +3,7 @@ INLAModelSel <- function(Response,
                          Explanatory,
                          Random = NULL, RandomModel = NULL,
                          Family, Data, Delta = 2,
+                         ScaleVariables = T,
 
                          AllModels = F, FullModel = F,
                          ReturnData = T,
@@ -10,7 +11,7 @@ INLAModelSel <- function(Response,
 
                          ...){
 
-  require(INLA); require(ggplot2)
+  require(INLA); require(ggplot2); require(magrittr)
 
   Data %<>% as.data.frame %>%
     mutate_if(is.character, as.factor)
@@ -163,24 +164,24 @@ INLAModelSel <- function(Response,
 
     }
 
-    AllModelList[[length(AllModelList)+1]] <- ModelList
-    FullFormulaList[[length(FullFormulaList)+1]] <- FormulaList
+    AllModelList[[length(AllModelList) + 1]] <- ModelList
+    FullFormulaList[[length(FullFormulaList) + 1]] <- FormulaList
 
-    DICList[[length(DICList)+1]] <- sapply(ModelList, function(y) y$dic$dic)
+    DICList[[length(DICList) + 1]] <- sapply(ModelList, function(y) y$dic$dic)
 
     names(DICList[[length(DICList)]]) <- NewExplanatory
 
-    dDICList[[length(dDICList)+1]] <- DICList[[length(DICList)]] - min(DICList[[length(DICList)-1]])
+    dDICList[[length(dDICList) + 1]] <- DICList[[length(DICList)]] - min(DICList[[length(DICList) - 1]])
 
     names(dDICList[[length(dDICList)]]) <-
-      RemovedList[[length(RemovedList)+1]] <-
+      RemovedList[[length(RemovedList) + 1]] <-
       NewExplanatory
 
   }
 
-  FinalModel <- AllModelList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]]==min(dDICList[[length(dDICList)-1]]))]]
+  FinalModel <- AllModelList[[length(AllModelList) - 1]][[which(dDICList[[length(dDICList) - 1]]==min(dDICList[[length(dDICList) - 1]]))]]
 
-  FinalFormula <- FullFormulaList[[length(AllModelList)-1]][[which(dDICList[[length(dDICList)-1]]==min(dDICList[[length(dDICList)-1]]))]]
+  FinalFormula <- FullFormulaList[[length(AllModelList) - 1]][[which(dDICList[[length(dDICList) - 1]]==min(dDICList[[length(dDICList) - 1]]))]]
 
   ReturnList <- list(FinalModel = FinalModel,
                      AllModels = AllModelList,
