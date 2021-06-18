@@ -19,7 +19,7 @@ INLAModelSel <- function(Response,
   if(ScaleVariables){
 
     Classes <- Data %>%
-      dplyr::select(Explanatory, intersect(Add, colnames(Data))) %>%
+      dplyr::select(intersect(Explanatory, colnames(Data))) %>%
       sapply(class)
 
     ToScale <- names(Classes[Classes %in% c("integer", "numeric")])
