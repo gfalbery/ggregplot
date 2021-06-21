@@ -5,7 +5,7 @@ INLAModelSel <- function(Response,
                          Family, Data, Delta = 2,
                          ScaleVariables = T,
 
-                         AllModels = F, FullModel = F,
+                         AllModels = F, FullModelReturn = F,
                          ReturnData = T,
                          Beep = T,
 
@@ -198,7 +198,7 @@ INLAModelSel <- function(Response,
 
   }
 
-  if(FullModel){
+  if(FullModelReturn){
 
     ReturnList$FullModel <- FullModel
 
