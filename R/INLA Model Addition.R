@@ -22,7 +22,8 @@ INLAModelAdd <- function(Response,
   print(paste0("Explanatory: ", paste0(Explanatory, collapse = ", ")))
   if(ScaleVariables) print("Scaling variables to SD and mean")
 
-  Data %<>% as.data.frame %>%
+  Data %<>%
+    as.data.frame %>%
     mutate_if(is.character, as.factor)
 
   if(ScaleVariables){
@@ -60,6 +61,8 @@ INLAModelAdd <- function(Response,
     f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, collapse = " + ")))
 
   }
+
+  print("Running base!")
 
   Base <- inla(f1,
                family = Family, #Ntrials = NTrials,
@@ -365,7 +368,7 @@ INLAModelAdd <- function(Response,
         as.data.frame
 
       Points %>%
-        slice(sample(1:n(), 100)) %>% as.matrix %>%
+        RandomSlice(100) %>% as.matrix %>%
         dist %>% c %>% max %>% divide_by(2) ->
         NullRangePrior; NullRangePrior
 
