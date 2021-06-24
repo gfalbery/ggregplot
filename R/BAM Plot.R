@@ -1,11 +1,11 @@
 
 # BAM Plot ####
 
-Model <- BAM1$FinalModel
-
-Data <- BAM1$Data
-
-PlotVariable <- "Density.Annual"
+# Model <- BAM1$FinalModel
+# 
+# Data <- BAM1$Data
+# 
+# PlotVariable <- "Density.Annual"
 
 BAMPlot <- function(
   
@@ -97,7 +97,9 @@ BAMPlot <- function(
         geom_ribbon(aes(ymin = Fit - SE,
                         ymax = Fit + SE),
                     alpha = 0.3) +
-        geom_line()
+        geom_line() +
+        labs(x = PlotVariable[r],
+             y = Response)
       
     }
     
