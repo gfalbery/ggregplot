@@ -65,7 +65,7 @@ INLAModelAdd <- function(Response,
   print("Running base!")
 
   Base <- inla(f1,
-               family = Family, #Ntrials = NTrials,
+               family = Family, Ntrials = NTrials,
                data = Data,
                control.compute = list(dic = TRUE))
 
@@ -403,9 +403,9 @@ INLAModelAdd <- function(Response,
 
       }
 
-      X %<>% rename_all(~str_replace_all(.x, ":", "_"))
+      X %<>% rename_all(~str_replace_all(.x, ":|[(]|[)]", "_"))
 
-      FixedCovar %<>% str_replace_all(":", "_")
+      FixedCovar %<>% str_replace_all(":|[(]|[)]", "_")
 
       FormulaCovar <- colnames(X)
 

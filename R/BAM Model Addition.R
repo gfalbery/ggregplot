@@ -1,6 +1,6 @@
 BAMModelAdd <- function(Response,
                         Data,
-                        Explanatory = NULL,
+                        Explanatory = 1, ScaleVariables = T,
                         Add = NULL,
                         Rounds = Inf,
                         Clashes = NULL,
@@ -14,18 +14,48 @@ BAMModelAdd <- function(Response,
 
   require(mgcv); require(ggplot2)
 
-  Data %<>% as.data.frame %>%
+  print(paste0("Response: ", Response))
+  print(paste0("Explanatory: ", paste0(Explanatory, collapse = ", ")))
+  if(ScaleVariables) print("Scaling variables to SD and mean")
+
+  Data %<>%
+    as.data.frame %>%
     mutate_if(is.character, as.factor)
+
+  if(ScaleVariables){
+
+    Classes <- Data %>%
+      dplyr::select(intersect(Explanatory, colnames(Data)),
+                    intersect(Add, colnames(Data))) %>%
+      sapply(class)
+
+    ToScale <- names(Classes[Classes %in% c("integer", "numeric")])
+
+    Data[,paste0(ToScale, ".Original")] <- Data[,ToScale]
+
+    Data %<>% mutate_at(ToScale, ~c(scale(.x)))
+
+    # if(Family == gaussian()){
+    #
+    #   Data[,paste0(Response, ".Original")] <- Data[,Response]
+    #
+    #   Data %<>% mutate_at(Response, ~c(scale(.x)))
+    #
+    # }
+  }
 
   Explanatory2 <- c(paste(Explanatory, collapse = " + "))
 
   f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, collapse = " + ")))
 
+  print(paste0("Running Base Model: ", f1))
+
   Base <- bam(f1,
               family = Family,
-              data = Data,
               paraPen = PP,
-              select = Select)
+              select = Select,
+              data = Data
+              )
 
   ModelList <- AllModelList <- RemovedList <- FullFormulaList <- FormulaList <- list()
   DICList <- dDICList <- list()

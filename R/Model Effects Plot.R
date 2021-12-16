@@ -28,8 +28,22 @@ Efxplot <- function(ModelList,
     }
 
     if(class(model) == "MCMCglmm"){
-      Graph<-as.data.frame(summary(model)$solutions)
+      Graph <- as.data.frame(summary(model)$solutions)
       colnames(Graph)[1:3]<-c("Estimate","Lower","Upper")
+    }
+
+    if(any(class(model) %>% str_detect("bam|gam"))){
+
+      Graph <-
+        summary(model)[1:4] %>%
+        map(~.x[1:length(summary(model)[[1]])]) %>%
+        bind_cols() %>%
+        rename(Estimate = p.coeff, P = p.pv) %>%
+        mutate(Lower = Estimate - se, Upper = Estimate + se) %>%
+        as.data.frame
+
+      rownames(Graph) <- summary(model)[[1]] %>% attr("names")
+
     }
 
     Graph$Model<-i
