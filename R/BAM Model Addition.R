@@ -35,27 +35,27 @@ BAMModelAdd <- function(Response,
 
     Data %<>% mutate_at(ToScale, ~c(scale(.x)))
 
-    # if(Family == gaussian()){
-    #
-    #   Data[,paste0(Response, ".Original")] <- Data[,Response]
-    #
-    #   Data %<>% mutate_at(Response, ~c(scale(.x)))
-    #
-    # }
+    if(Family == gaussian()){
+
+      Data[,paste0(Response, ".Original")] <- Data[,Response]
+
+      Data %<>% mutate_at(Response, ~c(scale(.x)))
+
+    }
   }
 
   Explanatory2 <- c(paste(Explanatory, collapse = " + "))
 
   f1 <- as.formula(paste0(Response, " ~ ", paste(Explanatory2, collapse = " + ")))
 
-  print(paste0("Running Base Model: ", f1))
+  print(paste0("Running Base Model: ", paste0(Response, " ~ ", paste(Explanatory2, collapse = " + "))))
 
   Base <- bam(f1,
               family = Family,
               paraPen = PP,
               select = Select,
               data = Data
-              )
+  )
 
   ModelList <- AllModelList <- RemovedList <- FullFormulaList <- FormulaList <- list()
   DICList <- dDICList <- list()

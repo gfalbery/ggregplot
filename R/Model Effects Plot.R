@@ -3,7 +3,7 @@
 Efxplot <- function(ModelList,
                     Sig = TRUE, StarLoc = NULL,
                     Alpha1 = 1, Alpha2 = 1,
-                    PointOutline = F,
+                    PointOutline = T,
                     ModelNames = NULL,
                     VarNames = NULL, VarOrder = NULL,
                     Intercept = TRUE, Size = 1,
@@ -15,6 +15,12 @@ Efxplot <- function(ModelList,
 
   if(!class(ModelList) == "list"){
     ModelList <- list(ModelList)
+  }
+
+  if(is.null(ModelNames) & !is.null(names(ModelList))){
+
+    ModelNames <- names(ModelList)
+
   }
 
   for(i in 1:length(ModelList)){
@@ -43,10 +49,25 @@ Efxplot <- function(ModelList,
         map(~.x[1:length(summary(model)[[1]])]) %>%
         bind_cols() %>%
         rename(Estimate = p.coeff, P = p.pv) %>%
-        mutate(Lower = Estimate - se, Upper = Estimate + se) %>%
+        # mutate(Lower = Estimate - se, Upper = Estimate + se) %>%
         as.data.frame
 
+      Coefs <- coef(model)
+      VC <- vcov(model)
+
+      sim <- mvrnorm(1000, mu = Coefs, Sigma = VC)
+
+      MCMCEffects <- sim %>% as.data.frame %>%
+        map(~.x %>% as.mcmc %>% HPDinterval)
+
       rownames(Graph) <- summary(model)[[1]] %>% attr("names")
+
+      Graph <- MCMCEffects[1:nrow(Graph)] %>%
+        map(~tibble(Lower = .x[1],
+                    Upper = .x[2])) %>%
+        # bind_rows(.id = "Name") %>%
+        bind_rows() %>%
+        bind_cols(Graph, .)
 
     }
 
