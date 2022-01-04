@@ -11,30 +11,34 @@ Efxplot <- function(ModelList,
 
   require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm)
 
-  Graphlist<-list()
+  Graphlist <- list()
 
   if(!class(ModelList) == "list"){
     ModelList <- list(ModelList)
   }
 
   for(i in 1:length(ModelList)){
-    model<-ModelList[[i]]
+    model <- ModelList[[i]]
 
     if(class(model) == "inla"){
-      Graph<-as.data.frame(summary(model)$fixed)
-      colnames(Graph)[which(colnames(Graph)%in%c("0.025quant","0.975quant"))]<-c("Lower","Upper")
-      colnames(Graph)[which(colnames(Graph)%in%c("0.05quant","0.95quant"))]<-c("Lower","Upper")
-      colnames(Graph)[which(colnames(Graph)%in%c("mean"))]<-c("Estimate")
+
+      Graph <- as.data.frame(summary(model)$fixed)
+      colnames(Graph)[which(colnames(Graph)%in%c("0.025quant","0.975quant"))] <- c("Lower","Upper")
+      colnames(Graph)[which(colnames(Graph)%in%c("0.05quant","0.95quant"))] <- c("Lower","Upper")
+      colnames(Graph)[which(colnames(Graph)%in%c("mean"))] <- c("Estimate")
+
+      rownames(Graph) %<>% str_replace_all(":", "_")
+
     }
 
     if(class(model) == "MCMCglmm"){
       Graph <- as.data.frame(summary(model)$solutions)
-      colnames(Graph)[1:3]<-c("Estimate","Lower","Upper")
+      colnames(Graph)[1:3] <- c("Estimate","Lower","Upper")
     }
 
     if(any(class(model) %>% str_detect("bam|gam"))){
 
-      Graph <-
+      Graph  <-
         summary(model)[1:4] %>%
         map(~.x[1:length(summary(model)[[1]])]) %>%
         bind_cols() %>%
@@ -46,10 +50,10 @@ Efxplot <- function(ModelList,
 
     }
 
-    Graph$Model<-i
-    Graph$Factor<-rownames(Graph)
+    Graph$Model <- i
+    Graph$Factor <- rownames(Graph)
 
-    Graphlist[[i]]<-Graph
+    Graphlist[[i]] <- Graph
 
   }
 
@@ -60,7 +64,7 @@ Efxplot <- function(ModelList,
   Graph$Model <- as.factor(Graph$Model)
 
   if(!is.null(ModelNames)){
-    levels(Graph$Model)<-ModelNames
+    levels(Graph$Model) <- ModelNames
   }
 
   position <- ifelse(length(unique(Graph$Model))  ==  1, "none", "right")
@@ -83,8 +87,8 @@ Efxplot <- function(ModelList,
 
   Graph$starloc <- NA
 
-  min<-min(Graph$Lower,na.rm = T)
-  max<-max(Graph$Upper,na.rm = T)
+  min <- min(Graph$Lower,na.rm = T)
+  max <- max(Graph$Upper,na.rm = T)
 
   if(Sig == TRUE){
 
