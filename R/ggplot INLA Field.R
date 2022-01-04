@@ -6,7 +6,7 @@ ggField <- function(Model, Mesh,
                     FitScale = "Link", GrandMean = NULL, Round = "Before",
                     Boundary = NULL, BoundaryWidth = 1,
                     Res = 300,
-                    Points = NULL, PointAlpha = 1,
+                    Points = NULL, PointAlpha = 1, PointSize = NULL,
                     PointColour = "black"){#, xlim, ylim){
 
   require(ggplot2); require(INLA); require(tidyverse)
@@ -162,7 +162,7 @@ ggField <- function(Model, Mesh,
       FieldPlot <- FieldPlot +
         geom_point(data = Points, inherit.aes = F,
                    aes(X, Y, group = Group),
-                   alpha = PointAlpha, colour = PointColour)
+                   alpha = PointAlpha, colour = PointColour, size = PointSize)
 
     }
   }
