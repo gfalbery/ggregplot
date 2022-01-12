@@ -6,7 +6,8 @@ Efxplot <- function(ModelList,
                     PointOutline = T,
                     ModelNames = NULL,
                     VarNames = NULL, VarOrder = NULL,
-                    Intercept = TRUE, Size = 1,
+                    Intercept = TRUE, PointSize = 1,
+                    BarWidth = 0.1,
                     tips = 0.2){
 
   require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm)
@@ -147,7 +148,7 @@ Efxplot <- function(ModelList,
              group = Model,
              colour = Model,
              alpha = SigAlpha)) +
-    geom_point(position = position_dodge(w = 0.5), size = Size) +
+    geom_point(position = position_dodge(w = 0.5), size = PointSize) +
     geom_errorbar(position = position_dodge(w = 0.5),
                   aes(ymin = Lower, ymax = Upper), size = 0.3,
                   width = tips) +
@@ -159,14 +160,14 @@ Efxplot <- function(ModelList,
     scale_alpha_manual(values = c(Alpha1, Alpha2)) +
     guides(alpha = "none") +
     geom_point(colour = "black", aes(group = Model),
-               position = position_dodge(w = 0.5), size = 4,
+               position = position_dodge(w = 0.5), size = PointSize*(4/3),
                alpha = PointOutlineAlpha) +
     geom_errorbar(aes(ymin = Lower, ymax = Upper, group = Model),
-                  width = 0.1,
+                  width = BarWidth,
                   position = position_dodge(w = 0.5),
                   colour = "black",
                   alpha = PointOutlineAlpha) +
-    geom_point(position = position_dodge(w = 0.5), size = 3,
+    geom_point(position = position_dodge(w = 0.5), size = PointSize,
                alpha = PointOutlineAlpha)
 
 }
