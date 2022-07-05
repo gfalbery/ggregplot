@@ -35,7 +35,7 @@ BAMModelAdd <- function(Response,
 
     Data %<>% mutate_at(ToScale, ~c(scale(.x)))
 
-    if(Family == gaussian()){
+    if(Family$family == "gaussian"){
 
       Data[,paste0(Response, ".Original")] <- Data[,Response]
 

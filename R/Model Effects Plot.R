@@ -10,7 +10,7 @@ Efxplot <- function(ModelList,
                     BarWidth = 0.1,
                     tips = 0.2){
 
-  require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm)
+  require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm); require(MASS)
 
   Graphlist <- list()
 
@@ -92,10 +92,16 @@ Efxplot <- function(ModelList,
   position <- ifelse(length(unique(Graph$Model))  ==  1, "none", "right")
 
   if(is.null(VarOrder)) VarOrder <- rev(unique(Graph$Factor))
-  if(is.null(VarNames)) VarNames <- VarOrder
+  if(is.null(VarNames)){
+
+    VarNames <- c(VarOrder)
+    names(VarNames) <- c(VarOrder)
+
+  }
 
   Graph$Factor <- factor(Graph$Factor, levels = VarOrder)
-  levels(Graph$Factor) <- VarNames
+
+  levels(Graph$Factor) %<>% str_replace_all(VarNames)
 
   Graph %<>% as.data.frame %>% filter(!is.na(Factor))
 
