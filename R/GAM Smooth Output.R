@@ -5,59 +5,168 @@ SmoothOutput <-
            Covariates, Response = "y",
            OutputCovariates,
            HoldFactors,
-           Output = "Link",
+           Output = "Link", Family = "Gaussian",
            AddPoints = F, TestDF = NULL, PointAlpha = 1,
+           ReturnPlot = F,
            ...){
 
     OutputList <- list()
 
     i <- 1
 
-    for(i in 1:length(OutputCovariates)){
+    if(any(class(Model) %in% c("bam", "gam"))){
 
-      print(OutputCovariates[i])
+      for(i in 1:length(OutputCovariates)){
 
-      PredList <- MakePredictDF(Data[,Covariates],
-                                HoldNumeric = Covariates %>% setdiff(OutputCovariates[i]),
-                                HoldFactor = HoldFactor)
+        print(OutputCovariates[i])
 
-      PredDF <- PredList %>% expand.grid()
+        PredList <- MakePredictDF(Data[,Covariates],
+                                  HoldNumeric = Covariates %>% setdiff(OutputCovariates[i]),
+                                  HoldFactor = HoldFactors)
 
-      PredValues <- predict.gam(Model,
-                                newdata = PredDF,
-                                se.fit = T)
+        PredDF <- PredList %>% expand.grid()
 
-      PredDF[,c("Fit", "SE")] <- PredValues %>% bind_cols %>% as.data.frame()
+        PredValues <- predict.gam(Model,
+                                  newdata = PredDF,
+                                  se.fit = T)
 
-      PredDF %<>% mutate(Value = Fit,
-                         Lower = Fit - SE,
-                         Upper = Fit + SE)
+        PredDF[,c("Fit", "SE")] <- PredValues %>% bind_cols %>% as.data.frame()
 
-      if(Output == "Logistic"){
+        PredDF %<>% mutate(Value = Fit,
+                           Lower = Fit - SE,
+                           Upper = Fit + SE)
 
-        PredDF %<>% mutate_at(c("Value", "Lower", "Upper"), logistic)
+        if(Output == "Logistic"){
+
+          PredDF %<>% mutate_at(c("Value", "Lower", "Upper"), logistic)
+
+        }
+
+        PredDF$x <- PredDF[,OutputCovariates[i]]
+
+        FocalPlot <-
+          PredDF %>%
+          ggplot(aes(x, Value))
+
+        if(AddPoints){
+
+          TestDF$x <- TestDF[,OutputCovariates[i]]
+
+          FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, y), alpha = PointAlpha)
+
+        }
+
+        FocalPlot <-
+          FocalPlot +
+          geom_ribbon(aes(ymin = Lower, ymax = Upper),
+                      alpha = 0.1, colour = AlberColours[1]) +
+          geom_line() +
+          labs(x = OutputCovariates[i], y = "Fit")
+
+        OutputList[[i]] <- FocalPlot
 
       }
 
-      PredDF$x <- PredDF[,OutputCovariates[i]]
+    } else if(any(class(Model) %in% c("inla"))){
 
-      FocalPlot <-
-        PredDF %>%
-        ggplot(aes(x, Value)) +
-        geom_ribbon(aes(ymin = Lower, ymax = Upper),
-                    alpha = 0.1, colour = AlberColours[1]) +
-        geom_line() +
-        labs(x = OutputCovariates[i], y = "Fit")
+      i <- 1
 
-      if(AddPoints){
+      Model %>%
+        INLAFit(Data, Covariates, NDraw = 100, Draw = T) %>% map_dbl(mean) -> Intercepts
 
-        TestDF$x <- TestDF[,OutputCovariates[i]]
+      for(i in 1:length(OutputCovariates)){
 
-        FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, y), alpha = PointAlpha)
+        print(OutputCovariates[i])
+
+        # PredList <- MakePredictDF(Data[,Covariates[!str_detect(Covariates, ":")]],
+        #                           HoldNumeric = Covariates[!str_detect(Covariates, ":")] %>% setdiff(OutputCovariates[i]),
+        #                           HoldFactor = HoldFactors)
+        #
+        # PredDF <- PredList %>% expand.grid()
+
+        X = seq(min(Data[,OutputCovariates[i]]),
+                max(Data[,OutputCovariates[i]]),
+                length.out = 100) %>% c
+
+        Model %>%
+          GetEstimates(OutputCovariates[i], NDraw = 100, Draws = T) -> Slopes
+
+        B = mean(Slopes)
+        A = mean(Intercepts)
+        Y = A + B*X
+
+        1:length(Slopes) %>%
+          map(~data.frame(X = X,
+                          Y = X*Slopes[[.x]] + Intercepts[[.x]])) -> SlopeDF
+
+        SlopeDF %<>% bind_rows(.id = "Rep")
+
+        FitLine <-
+          data.frame(
+            X = X,
+            Y = Y
+          )
+
+        Data$X <- Data[,OutputCovariates[i]]
+        Data$Y <- Data[,Response]
+
+        if(Output == "Data" & Family == "Binomial"){
+
+          FitLine %<>% mutate_at(c("Y"), logistic)
+          SlopeDF %<>% mutate_at(c("Y"), logistic)
+
+        }
+
+        if(Output == "Data" & Family == "NBinomial"){
+
+          FitLine %<>% mutate_at(c("Y"), ~exp(.x))
+          SlopeDF %<>% mutate_at(c("Y"), ~exp(.x))
+
+        }
+
+        FocalPlot <-
+          FitLine %>%
+          ggplot(aes(X, Y))
+
+        if(AddPoints){
+
+          TestDF$x <- TestDF[,OutputCovariates[i]]
+          TestDF$y <- TestDF[,Response]
+
+          if(Output == "Data"|Family == "Gaussian"){
+
+            FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, y), alpha = PointAlpha)
+
+          }else if(Output == "Link"){
+
+            if(Family == "Binomial"){
+
+              FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, logit(y)), alpha = PointAlpha)
+
+            }else{
+
+              FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, log(y + 1)), alpha = PointAlpha)
+
+            }
+
+          }
+
+        }
+
+        FocalPlot <-
+          FocalPlot +
+          geom_line(alpha = 0.05, data = SlopeDF, aes(X, Y, group = Rep)) +
+          geom_line(data = FitLine, size = 1)  +
+          labs(y = Response, x = OutputCovariates[i])
+
+        OutputList[[i]] <- FocalPlot
 
       }
+    }
 
-      OutputList[[i]] <- FocalPlot
+    if(ReturnPlot){
+
+      OutputList %>% ArrangeCowplot() %>% plot
 
     }
 
