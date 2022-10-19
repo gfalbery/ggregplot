@@ -4,9 +4,12 @@ SmoothOutput <-
            Model,
            Covariates, Response = "y",
            OutputCovariates,
-           HoldFactors,
+           HoldFactors = c(" " = " "),
            Output = "Link", Family = "Gaussian",
-           AddPoints = F, TestDF = NULL, PointAlpha = 1,
+           LineAlpha = 0.05,
+           AddPoints = F, TestDF = NULL, PointAlpha = 1, PointColour = NA,
+           AddP = F, AddEstimate = F, LimitClip = T, TextColour = NA,
+           SmoothFillAlpha = 0.1, SmoothColour = AlberColours[[1]],
            ReturnPlot = F,
            ...){
 
@@ -59,9 +62,17 @@ SmoothOutput <-
         FocalPlot <-
           FocalPlot +
           geom_ribbon(aes(ymin = Lower, ymax = Upper),
-                      alpha = 0.1, colour = AlberColours[1]) +
+                      alpha = SmoothFillAlpha, colour = SmoothColour) +
           geom_line() +
-          labs(x = OutputCovariates[i], y = "Fit")
+          labs(x = OutputCovariates[i], y = Response)
+
+        if(LimitClip){
+
+          FocalPlot <- FocalPlot + lims(y = c(min(PredDF$Lower), max(PredDF$Upper)) +
+                                          c(-diff(range(PredDF$Value))*0.1,
+                                            diff(range(PredDF$Value))*0.1))
+
+        }
 
         OutputList[[i]] <- FocalPlot
 
@@ -135,17 +146,20 @@ SmoothOutput <-
 
           if(Output == "Data"|Family == "Gaussian"){
 
-            FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, y), alpha = PointAlpha)
+            FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, y),
+                                                alpha = PointAlpha, colour = PointColour)
 
           }else if(Output == "Link"){
 
             if(Family == "Binomial"){
 
-              FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, logit(y)), alpha = PointAlpha)
+              FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, logit(y)),
+                                                  alpha = PointAlpha, colour = PointColour)
 
             }else{
 
-              FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, log(y + 1)), alpha = PointAlpha)
+              FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, log(y + 1)),
+                                                  alpha = PointAlpha, colour = PointColour)
 
             }
 
@@ -155,9 +169,62 @@ SmoothOutput <-
 
         FocalPlot <-
           FocalPlot +
-          geom_line(alpha = 0.05, data = SlopeDF, aes(X, Y, group = Rep)) +
+          geom_line(alpha = LineAlpha, data = SlopeDF, aes(X, Y, group = Rep)) +
           geom_line(data = FitLine, size = 1)  +
           labs(y = Response, x = OutputCovariates[i])
+
+        if(AddP | AddEstimate){
+
+          LabelDF <- data.frame(X = mean(range(FitLine$X)),
+                                Y = max(SlopeDF$Y) + diff(range(SlopeDF$Y))*0.05)
+
+          if(AddP){
+
+            PValue <- INLAPValue(Model, OutputCovariates[i])[[1]]
+
+            if(PValue < 0.001){
+
+              PValue <- "P < 0.001"
+
+            }else{
+
+              PValue <- paste0("P = ", round(PValue, 3))
+
+            }
+
+            LabelDF$PValue <- LabelDF$Label <- PValue
+
+          }
+
+          if(AddEstimate){
+
+            Estimate <- GetEstimates(Model, OutputCovariates[i])
+
+            LabelDF$Estimate <- LabelDF$Label <- Estimate
+
+          }
+
+          if(AddP & AddEstimate){
+
+            LabelDF$Label <- paste0(LabelDF$Estimate, "; ", LabelDF$PValue)
+
+          }
+
+          FocalPlot <-
+            FocalPlot +
+            geom_label(data = LabelDF, aes(label = Label, x = X, y = Y),
+                       fill = "white", label.size = NA,
+                       colour = TextColour)
+
+        }
+
+        if(LimitClip){
+
+          FocalPlot <- FocalPlot + lims(y = range(SlopeDF$Y) +
+                                          c(-diff(range(SlopeDF$Y))*0.1,
+                                            diff(range(SlopeDF$Y))*0.1))
+
+        }
 
         OutputList[[i]] <- FocalPlot
 

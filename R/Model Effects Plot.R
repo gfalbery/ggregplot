@@ -15,7 +15,9 @@ Efxplot <- function(ModelList,
   Graphlist <- list()
 
   if(!class(ModelList) == "list"){
+
     ModelList <- list(ModelList)
+
   }
 
   if(is.null(ModelNames) & !is.null(names(ModelList))){
@@ -25,6 +27,7 @@ Efxplot <- function(ModelList,
   }
 
   for(i in 1:length(ModelList)){
+
     model <- ModelList[[i]]
 
     if(class(model) == "inla"){
@@ -98,6 +101,8 @@ Efxplot <- function(ModelList,
     names(VarNames) <- c(VarOrder)
 
   }
+
+  Graph$Factor %<>% str_replace_all("(Intercept)", "Intercept")
 
   Graph$Factor <- factor(Graph$Factor, levels = VarOrder)
 
