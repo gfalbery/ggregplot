@@ -30,7 +30,7 @@ Efxplot <- function(ModelList,
 
     model <- ModelList[[i]]
 
-    if(class(model) == "inla"){
+    if(any(class(model) %>% str_detect("inla"))){
 
       Graph <- as.data.frame(summary(model)$fixed)
       colnames(Graph)[which(colnames(Graph)%in%c("0.025quant","0.975quant"))] <- c("Lower","Upper")
@@ -41,7 +41,7 @@ Efxplot <- function(ModelList,
 
     }
 
-    if(class(model) == "MCMCglmm"){
+    if(any(class(model) %>% str_detect("MCMCglmm"))){
       Graph <- as.data.frame(summary(model)$solutions)
       colnames(Graph)[1:3] <- c("Estimate","Lower","Upper")
     }
