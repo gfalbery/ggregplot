@@ -1,6 +1,6 @@
 
 QuickGAMPredict <-
-  
+
   function(Data,
            Model,
            Covariates, #Response = "y",
@@ -13,39 +13,39 @@ QuickGAMPredict <-
            # SmoothFillAlpha = 0.1, SmoothColour = AlberColours[[1]],
            # ReturnPlot = F,
            ...){
-    
+
     OutputList <- list()
-    
+
     i <- 1
-    
+
     if(any(class(Model) %in% c("bam", "gam"))){
-      
-      PredList <- MakePredictDF(Data[,Covariates],
+
+      PredList <- MakePredictDF(Data %>% dplyr::select(Covariates),
                                 HoldNumeric = Covariates %>% setdiff(OutputCovariate),
                                 HoldFactor = HoldFactors)
-      
+
       PredDF <- PredList %>% expand.grid()
-      
+
       PredValues <- predict.gam(Model,
                                 newdata = PredDF,
                                 se.fit = T)
-      
+
       PredDF[,c("Fit", "SE")] <- PredValues %>% bind_cols %>% as.data.frame()
-      
+
       PredDF %<>% mutate(Value = Fit,
                          Lower = Fit - SE,
                          Upper = Fit + SE)
-      
+
       if(Output == "Logistic"){
-        
+
         PredDF %<>% mutate_at(c("Value", "Lower", "Upper"), logistic)
-        
+
       }
-      
+
       PredDF$x <- PredDF[,OutputCovariate]
-      
+
     }
-    
+
     PredDF %>% return
-    
+
   }

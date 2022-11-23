@@ -10,6 +10,12 @@ MakePredictDF <- function(DF,
 
   PredList <- list()
 
+  if(length(HoldNumeric) == 0){
+
+    HoldNumeric <- NULL
+
+  }
+
   NumericDF <- DF %>%
     dplyr::select_if(is.numeric)
 
