@@ -1,6 +1,20 @@
 ############ ggMMplot ##############
-ggMMplot <- function(df, var1, var2, Alpha = 1){
+
+ggMMplot <- function(df, var1, var2, Alpha = 1, Just = F){
   require(ggplot2)
+
+  if(Just){
+
+    Angle <- 45
+    HJust <- 0
+
+  }else{
+
+    Angle <- 0
+    HJust <- 0.5
+
+  }
+
   df2<-na.omit(df[,c(var1,var2)])
 
   df2[,var1]<-as.factor(df2[,var1])
@@ -11,14 +25,23 @@ ggMMplot <- function(df, var1, var2, Alpha = 1){
 
   jointTable <- prop.table(table(df2[,var1], df2[,var2]))
   plotData <- as.data.frame(jointTable)
+
   plotData$marginVar1 <- prop.table(table(df2[,var1]))
+
   plotData$var2Height <- plotData$Freq / plotData$marginVar1
+
   plotData$var1Center <- c(0, cumsum(plotData$marginVar1)[1:levVar1 -1]) +
     plotData$marginVar1 / 2
+
   plotData$N<-c(table(df2[,var1],df2[,var2]))
 
   ggplot(plotData, aes(var1Center, var2Height)) +
-    geom_bar(stat = "identity", aes(width = marginVar1, fill = Var2), col = "Black", alpha = Alpha) +
-    geom_text(aes(label = as.character(Var1), x = var1Center, y = 1.05))+labs(x=NULL,y=NULL,fill=var2)
+    geom_bar(stat = "identity", aes(width = marginVar1,
+                                    fill = Var2),
+             col = "Black", alpha = Alpha) +
+    geom_text(aes(label = as.character(Var1),
+                  hjust = HJust, angle = Angle,
+                  x = var1Center, y = 1.05)) +
+    labs(x = NULL,y = NULL, fill = var2)
 
-  }
+}
