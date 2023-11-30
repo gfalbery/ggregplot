@@ -82,6 +82,28 @@ BarGraph <- function(df, x, y, z = x,
 
 
     }
+  } else if(Text == "Prev"){
+
+    PositionT <- (max(abs(c(Errordf$Mean + Errordf$se,Errordf$Mean - Errordf$se)), na.rm = T))/15
+
+    if(!TextSize){
+
+      SPlot <- SPlot + geom_text(data = Errordf, aes(y = ifelse(Mean + se > 0,
+                                                                Mean + se + PositionT,
+                                                                PositionT), label = paste0(round(Mean*100), "%")),
+                                 position=position_dodge(.9))
+    } else{
+
+      SPlot <- SPlot + geom_text(data = Errordf, aes(y = ifelse(Mean + se > 0,
+                                                                Mean + se + PositionT,
+                                                                PositionT), label = paste0(round(Mean*100), "%")),
+                                 position=position_dodge(.9),
+                                 size = TextSize)
+
+
+
+      }
+
   }
 
   SPlot
