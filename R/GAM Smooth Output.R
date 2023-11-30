@@ -7,8 +7,9 @@ SmoothOutput <-
            HoldFactors = c(" " = " "),
            Output = "Link", Family = "Gaussian",
            LineAlpha = 0.05,
-           AddPoints = F, TestDF = NULL, PointAlpha = 1, PointColour = NA,
+           AddPoints = F, TestDF = NULL, PointAlpha = 1, PointColour = "black",
            AddP = F, AddEstimate = F, LimitClip = T, TextColour = NA,
+           ManualPY = NULL,
            SmoothFillAlpha = 0.1, SmoothColour = AlberColours[[1]],
            ReturnPlot = F,
            ...){
@@ -207,6 +208,12 @@ SmoothOutput <-
           if(AddP & AddEstimate){
 
             LabelDF$Label <- paste0(LabelDF$Estimate, "; ", LabelDF$PValue)
+
+          }
+
+          if(!is.null(ManualPY)){
+
+            LabelDF$Y <- ManualPY
 
           }
 
