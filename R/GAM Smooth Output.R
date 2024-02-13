@@ -176,8 +176,18 @@ SmoothOutput <-
 
         if(AddP | AddEstimate){
 
+          if(AddPoints == T & LimitClip == F){
+
+            LabelYMax <- max(TestDF$y) + diff(range(SlopeDF$Y))*0.05
+
+          }else{
+
+            LabelYMax <- max(SlopeDF$Y) + diff(range(SlopeDF$Y))*0.05
+
+          }
+
           LabelDF <- data.frame(X = mean(range(FitLine$X)),
-                                Y = max(SlopeDF$Y) + diff(range(SlopeDF$Y))*0.05)
+                                Y = LabelYMax)
 
           if(AddP){
 

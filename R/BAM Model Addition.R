@@ -10,6 +10,7 @@ BAMModelAdd <- function(Response,
                         ReturnData = T,
                         PP = NULL,
                         Select = T,
+                        Gamma = NULL,
                         Beep = F){
 
   require(mgcv); require(ggplot2)
@@ -54,6 +55,7 @@ BAMModelAdd <- function(Response,
               family = Family,
               paraPen = PP,
               select = Select,
+              gamma = Gamma,
               data = Data
   )
 
@@ -85,6 +87,7 @@ BAMModelAdd <- function(Response,
                     family = Family,
                     data = Data,
                     paraPen = PP,
+                    gamma = Gamma,
                     select = Select)
 
       ModelList[[Add[x]]] <- Model1
@@ -176,6 +179,7 @@ BAMModelAdd <- function(Response,
                             family = Family,
                             data = Data,
                             paraPen = PP,
+                            gamma = Gamma,
                             select = Select)
 
               ModelList[[Add2[x]]] <- Model1

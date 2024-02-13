@@ -3,7 +3,7 @@
 ggField <- function(Model, Mesh,
                     Groups = 1, GroupVar = NULL, GroupLabels = NULL,
                     Fill = "Discrete", FillAlpha = F,
-                    FitScale = "Link", GrandMean = NULL, Round = "Before",
+                    FitScale = "Link", GrandMean = NULL, GrandSD = NULL, Round = "Before",
                     Boundary = NULL, BoundaryWidth = 1,
                     Res = 300,
                     Points = NULL, PointAlpha = 1, PointSize = NULL,
@@ -51,10 +51,17 @@ ggField <- function(Model, Mesh,
 
   }
 
-  if(FitScale == "Binomial"&Round == "Before"){
+  if(FitScale == "Binomial" & Round == "Before"){
 
     Full.Projection %<>%
       mutate_at("value", ~logistic(as.numeric(as.character(.x)) + GrandMean))
+
+  }
+
+  if(FitScale == "Gaussian" & Round == "Before"){
+
+    Full.Projection %<>%
+      mutate_at("value", ~(as.numeric(as.character(.x)))*GrandSD + GrandMean)
 
   }
 
@@ -70,8 +77,14 @@ ggField <- function(Model, Mesh,
 
   }
 
+  if(FitScale == "Gaussian" & Round == "After"){
 
-  if(FitScale == "Binomial"&Round == "After"){
+    Full.Projection %<>%
+      mutate_at("Fill", ~(as.numeric(as.character(.x)))*GrandSD + GrandMean)
+
+  }
+
+  if(FitScale == "Binomial" & Round == "After"){
 
     Full.Projection %<>%
       mutate_at("value", ~logistic(as.numeric(as.character(.x)) + GrandMean))
