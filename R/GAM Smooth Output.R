@@ -10,6 +10,7 @@ SmoothOutput <-
            AddPoints = F, TestDF = NULL, PointAlpha = 1, PointColour = "black",
            AddP = F, AddEstimate = F, LimitClip = T, TextColour = NA,
            ManualPY = NULL,
+           XTransform = NULL, YTransform = NULL, XAdd = NULL, YAdd = NULL,
            SmoothFillAlpha = 0.1, SmoothColour = AlberColours[[1]],
            ReturnPlot = F,
            ...){
@@ -17,6 +18,8 @@ SmoothOutput <-
     OutputList <- list()
 
     i <- 1
+
+    if(Family == "Binomial" & Output == "Data") ManualPY <- 1.1
 
     if(any(class(Model) %in% c("bam", "gam"))){
 
@@ -84,7 +87,11 @@ SmoothOutput <-
       i <- 1
 
       Model %>%
-        INLAFit(Data, Covariates, NDraw = 100, Draw = T) %>% map_dbl(mean) -> Intercepts
+        INLAFit(TestDF = Data,
+                FixedCovar = Covariates,
+                HoldFixed = HoldFactors,
+                ...,
+                NDraw = 100, Draw = T) %>% map_dbl(mean) -> Intercepts
 
       for(i in 1:length(OutputCovariates)){
 
@@ -136,6 +143,34 @@ SmoothOutput <-
 
         }
 
+        if(!is.null(XTransform)){
+
+          FitLine %<>% mutate_at(c("X"), ~.x*XTransform)
+          SlopeDF %<>% mutate_at(c("X"), ~.x*XTransform)
+
+        }
+
+        if(!is.null(YTransform)){
+
+          FitLine %<>% mutate_at(c("Y"), ~.x*YTransform)
+          SlopeDF %<>% mutate_at(c("Y"), ~.x*YTransform)
+
+        }
+
+        if(!is.null(XAdd)){
+
+          FitLine %<>% mutate_at(c("X"), ~.x + XAdd)
+          SlopeDF %<>% mutate_at(c("X"), ~.x + XAdd)
+
+        }
+
+        if(!is.null(YAdd)){
+
+          FitLine %<>% mutate_at(c("Y"), ~.x + YAdd)
+          SlopeDF %<>% mutate_at(c("Y"), ~.x + YAdd)
+
+        }
+
         FocalPlot <-
           FitLine %>%
           ggplot(aes(X, Y))
@@ -144,6 +179,30 @@ SmoothOutput <-
 
           TestDF$x <- TestDF[,OutputCovariates[i]]
           TestDF$y <- TestDF[,Response]
+
+          if(!is.null(XTransform)){
+
+            TestDF %<>% mutate_at(c("x"), ~.x*XTransform)
+
+          }
+
+          if(!is.null(YTransform)){
+
+            TestDF %<>% mutate_at(c("y"), ~.x*YTransform)
+
+          }
+
+          if(!is.null(XAdd)){
+
+            TestDF %<>% mutate_at(c("x"), ~.x + XAdd)
+
+          }
+
+          if(!is.null(YAdd)){
+
+            TestDF %<>% mutate_at(c("y"), ~.x + YAdd)
+
+          }
 
           if(Output == "Data"|Family == "Gaussian"){
 
@@ -189,6 +248,18 @@ SmoothOutput <-
           LabelDF <- data.frame(X = mean(range(FitLine$X)),
                                 Y = LabelYMax)
 
+          # if(!is.null(XTransform)){
+          #
+          #   LabelDF %<>% mutate_at(c("X"), ~.x*XTransform)
+          #
+          # }
+          #
+          # if(!is.null(YTransform)){
+          #
+          #   LabelDF %<>% mutate_at(c("Y"), ~.x*YTransform)
+          #
+          # }
+
           if(AddP){
 
             PValue <- INLAPValue(Model, OutputCovariates[i])[[1]]
@@ -209,7 +280,16 @@ SmoothOutput <-
 
           if(AddEstimate){
 
-            Estimate <- GetEstimates(Model, OutputCovariates[i])
+            if(is.null(XTransform)) XTransform <- 1
+            if(is.null(YTransform)) YTransform <- 1
+
+            Estimate <-
+              GetEstimates(Model, OutputCovariates[i], Mode = "Numeric")/
+              XTransform*YTransform
+
+            Estimate %<>% round(3)
+
+            Estimate <- paste0(Estimate[1], " (", Estimate[2], ", ", Estimate[3], ")")
 
             LabelDF$Estimate <- LabelDF$Label <- Estimate
 

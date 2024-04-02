@@ -299,6 +299,8 @@ INLAModelAdd <- function(Response,
 
         Explanatory3 <- Add[1:x]
 
+        print(paste0("Adding: ", paste(Explanatory3, collapse = " + ")))
+
         if(!is.null(Random)){
 
           Random2 <- paste(paste0("f(",Random, ", model = '", RandomModel, "')"), collapse = " + ")

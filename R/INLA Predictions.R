@@ -13,16 +13,28 @@ INLAFit <- function(Model, TestDF,
 
   if(!is.null(HoldFixed)){
 
-    TestDF %>% dplyr::select(vars(is.numeric)) %>%
-      names %>% intersect(HoldFixed) ->
+    TestDF %>%
+      dplyr::select_if(is.numeric) %>%
+      names %>% intersect(names(HoldFixed)) ->
 
       HoldFixedNumeric
 
-    TestDf %>% mutate_at(HoldFixedNumeric, mean) ->
+    TestDF %>% mutate_at(HoldFixedNumeric, mean) ->
 
       TestDF
 
-    HoldFixedNumeric %>% setdiff(HoldFixed, .) -> HoldFixedCategorical
+    HoldFixedNumeric %>% setdiff(names(HoldFixed), .) -> HoldFixedCategorical
+
+    if(length(HoldFixedCategorical) > 0){
+
+      HoldFixedCategorical %>%
+        map(function(a){
+
+          TestDF[,a] <<- HoldFixed[[a]]
+
+        })
+
+    }
 
   }
 
