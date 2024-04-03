@@ -4,7 +4,7 @@ SmoothOutput <-
            Model,
            Covariates, Response = "y",
            OutputCovariates,
-           HoldFactors = c(" " = " "),
+           HoldFixed = NULL,
            Output = "Link", Family = "Gaussian",
            LineAlpha = 0.05,
            AddPoints = F, TestDF = NULL, PointAlpha = 1, PointColour = "black",
@@ -89,7 +89,7 @@ SmoothOutput <-
       Model %>%
         INLAFit(TestDF = Data,
                 FixedCovar = Covariates,
-                HoldFixed = HoldFactors,
+                # HoldFixed = HoldFactors,
                 ...,
                 NDraw = 100, Draw = T) %>% map_dbl(mean) -> Intercepts
 

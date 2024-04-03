@@ -165,7 +165,7 @@ INLAFit <- function(Model, TestDF,
 
     if(length(Ranges)>0){
 
-      if(!class(Locations) == "matrix"){
+      if(!class(Locations)[1] == "matrix"){
 
         Locations <- as.matrix(Locations)
 
@@ -383,7 +383,7 @@ INLAFit <- function(Model, TestDF,
 
     if(length(Ranges)>0){
 
-      if(!class(Locations) == "matrix"){
+      if(!class(Locations)[1] == "matrix"){
 
         Locations <- as.matrix(Locations)
 
