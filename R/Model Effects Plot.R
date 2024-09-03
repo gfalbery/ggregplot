@@ -5,18 +5,26 @@ Efxplot <- function(ModelList,
                     Alpha1 = 1, Alpha2 = 1,
                     PointOutline = T,
                     ModelNames = NULL,
+                    Reverse = T,
                     VarNames = NULL, VarOrder = NULL,
                     Intercept = TRUE, PointSize = 1,
                     BarWidth = 0.1,
                     tips = 0.2){
 
   require(dplyr); require(ggplot2); require(INLA); require(MCMCglmm); require(MASS)
+  require(magrittr)
 
   Graphlist <- list()
 
-  if(!class(ModelList) == "list"){
+  if(!any(class(ModelList) == "list")){
 
     ModelList <- list(ModelList)
+
+  }
+
+  if(Reverse){
+
+    ModelList <- ModelList[rev(1:length(ModelList))]
 
   }
 
@@ -33,9 +41,10 @@ Efxplot <- function(ModelList,
     if(any(class(model) %>% str_detect("inla"))){
 
       Graph <- as.data.frame(summary(model)$fixed)
-      colnames(Graph)[which(colnames(Graph)%in%c("0.025quant","0.975quant"))] <- c("Lower","Upper")
-      colnames(Graph)[which(colnames(Graph)%in%c("0.05quant","0.95quant"))] <- c("Lower","Upper")
-      colnames(Graph)[which(colnames(Graph)%in%c("mean"))] <- c("Estimate")
+
+      Graph %<>% rename(Estimate = mean,
+                        Lower = `0.025quant`,
+                        Upper = `0.975quant`)
 
       rownames(Graph) %<>% str_replace_all(":", "_")
 
@@ -84,12 +93,14 @@ Efxplot <- function(ModelList,
 
   Graph <- bind_rows(Graphlist)
 
-  Graph$Sig <- with(Graph, ifelse(Lower*Upper>0, "*", ""))
-
-  Graph$Model <- as.factor(Graph$Model)
+  Graph %<>%
+    mutate(Sig = ifelse(Lower*Upper>0, "*", "")) %>%
+    mutate_at("Model", as.factor)
 
   if(!is.null(ModelNames)){
+
     levels(Graph$Model) <- ModelNames
+
   }
 
   position <- ifelse(length(unique(Graph$Model))  ==  1, "none", "right")
@@ -168,8 +179,6 @@ Efxplot <- function(ModelList,
     geom_text(aes(label = Sig, y = starloc),
               position = position_dodge(w = 0.5),
               show.legend = F) +
-    scale_alpha_manual(values = c(Alpha1, Alpha2)) +
-    guides(alpha = "none") +
     geom_point(colour = "black", aes(group = Model),
                position = position_dodge(w = 0.5), size = PointSize*(4/3),
                alpha = PointOutlineAlpha) +
@@ -179,7 +188,10 @@ Efxplot <- function(ModelList,
                   colour = "black",
                   alpha = PointOutlineAlpha) +
     geom_point(position = position_dodge(w = 0.5), size = PointSize,
-               alpha = PointOutlineAlpha)
+               alpha = PointOutlineAlpha) +
+    # scale_colour_manual(limits = rev(ModelNames)) +
+    scale_alpha_manual(values = c(Alpha1, Alpha2)) +
+    guides(alpha = "none")
 
 }
 

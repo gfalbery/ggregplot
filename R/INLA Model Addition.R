@@ -9,6 +9,8 @@ INLAModelAdd <- function(Response,
                          ReturnData = T, AllModels = F, BaseModel = F,
                          Family = "gaussian", NTrials = 1,
 
+                         RangePrior = 100,
+
                          Beep = T,
 
                          AddSpatial = F, Coordinates = c("X", "Y"), Boundary = NULL,
@@ -403,10 +405,24 @@ INLAModelAdd <- function(Response,
       Points <- Data %>% dplyr::select(all_of(SubCoordinates)) %>%
         as.data.frame
 
-      Points %>%
-        RandomSlice(100) %>% as.matrix %>%
-        dist %>% c %>% max %>% divide_by(2) ->
-        NullRangePrior; NullRangePrior
+      if(RangePrior == "Full"){
+
+        Points %>%
+          # RandomSlice(100) %>%
+          as.matrix %>%
+          dist %>% c %>% max %>% divide_by(2) ->
+          NullRangePrior; NullRangePrior
+
+      }else{
+
+        Points %>%
+          RandomSlice(RangePrior) %>% as.matrix %>%
+          dist %>% c %>% max %>% divide_by(2) ->
+          NullRangePrior; NullRangePrior
+
+      }
+
+      print(paste0("Range prior: ", NullRangePrior))
 
       Points %<>% as.matrix
 

@@ -15,7 +15,9 @@
 #   return(data_sum)
 # }
 
-BarBarGraph <- function(Data, group, x, y, AddPoints = F){
+BarBarGraph <- function(Data, group, x, y,
+                        ColourLines = T,
+                        AddPoints = F){
 
   require(magrittr)
 
@@ -60,23 +62,44 @@ BarBarGraph <- function(Data, group, x, y, AddPoints = F){
 
   }
 
-  SPlot <- SPlot +
+  if(ColourLines){
 
-    geom_errorbar(data = Errordf, inherit.aes = F,
-                  aes(x = MeanX,
-                      ymin = YLower,
-                      ymax = YUpper,
-                      group = Colour),
-                  # width = 0.1,
-                  colour = "black") +
 
-    geom_errorbarh(data = Errordf, inherit.aes = F,
-                   aes(y = MeanY,
-                       xmin = XLower,
-                       xmax = XUpper,
-                       group = Colour),
-                   # width = 0.1,
-                   colour = "black")
+    SPlot <- SPlot +
+
+      geom_errorbar(data = Errordf, inherit.aes = F,
+                    aes(x = MeanX,
+                        ymin = YLower,
+                        ymax = YUpper,
+                        colour = Colour)) +
+
+      geom_errorbarh(data = Errordf, inherit.aes = F,
+                     aes(y = MeanY,
+                         xmin = XLower,
+                         xmax = XUpper,
+                         colour = Colour))
+
+  }else{
+
+    SPlot <- SPlot +
+
+      geom_errorbar(data = Errordf, inherit.aes = F,
+                    aes(x = MeanX,
+                        ymin = YLower,
+                        ymax = YUpper,
+                        group = Colour),
+                    # width = 0.1,
+                    colour = "black") +
+
+      geom_errorbarh(data = Errordf, inherit.aes = F,
+                     aes(y = MeanY,
+                         xmin = XLower,
+                         xmax = XUpper,
+                         group = Colour),
+                     # width = 0.1,
+                     colour = "black")
+
+  }
 
   SPlot %>% return
 

@@ -90,7 +90,7 @@ SmoothOutput <-
         INLAFit(TestDF = Data,
                 FixedCovar = Covariates,
                 # HoldFixed = HoldFactors,
-                ...,
+                # ...,
                 NDraw = 100, Draw = T) %>% map_dbl(mean) -> Intercepts
 
       for(i in 1:length(OutputCovariates)){
