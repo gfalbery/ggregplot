@@ -58,6 +58,7 @@ SmoothOutput <-
         if(AddPoints){
 
           TestDF$x <- TestDF[,OutputCovariates[i]]
+          TestDF$y <- TestDF[,Response]
 
           FocalPlot <- FocalPlot + geom_point(data = TestDF, aes(x, y), alpha = PointAlpha)
 
@@ -88,8 +89,9 @@ SmoothOutput <-
 
       Model %>%
         INLAFit(TestDF = Data,
-                FixedCovar = Covariates,
+                FixedCovar = Covariates, #Locations = Locations, Mesh = Mesh, SPDE = SPDE, HoldRandom = HoldRandom,
                 # HoldFixed = HoldFactors,
+                HoldRandom = HoldRandom,
                 # ...,
                 NDraw = 100, Draw = T) %>% map_dbl(mean) -> Intercepts
 

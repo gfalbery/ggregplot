@@ -122,7 +122,7 @@ ggField <- function(Model, Mesh,
 
     FieldPlot <- FieldPlot +
       #geom_tile(colour = "black") +
-      geom_tile(colour = NA, aes(fill = Fill, alpha = Fill)) +
+      geom_tile(colour = NA, aes(fill = Fill), alpha = FillAlpha) +
       coord_fixed() + labs(fill = "Mean") +
       labs(x = "Easting", y = "Northing")
 

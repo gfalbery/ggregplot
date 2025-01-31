@@ -240,6 +240,8 @@ INLAFit <- function(Model, TestDF,
 
     RandomCovar <- names(RandomEstimates) %>% setdiff(Ranges)
 
+    RandomCovar %<>% setdiff(HoldRandom)
+
     if(length(RandomCovar)>0){
 
       lapply(RandomCovar, function(a){
