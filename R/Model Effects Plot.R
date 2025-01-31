@@ -5,7 +5,7 @@ Efxplot <- function(ModelList,
                     Alpha1 = 1, Alpha2 = 1,
                     PointOutline = T,
                     ModelNames = NULL,
-                    Reverse = T,
+                    Reverse = T, # If you reverse it you may need to then modify the labels
                     VarNames = NULL, VarOrder = NULL,
                     Intercept = TRUE, PointSize = 1,
                     BarWidth = 0.1,
@@ -26,6 +26,11 @@ Efxplot <- function(ModelList,
 
     ModelList <- ModelList[rev(1:length(ModelList))]
 
+    if(!is.null(ModelNames)){
+
+      ModelNames %<>% rev
+
+    }
   }
 
   if(is.null(ModelNames) & !is.null(names(ModelList))){
@@ -190,6 +195,7 @@ Efxplot <- function(ModelList,
     geom_point(position = position_dodge(w = 0.5), size = PointSize,
                alpha = PointOutlineAlpha) +
     # scale_colour_manual(limits = rev(ModelNames)) +
+    guides(color = guide_legend(reverse = Reverse)) +
     scale_alpha_manual(values = c(Alpha1, Alpha2)) +
     guides(alpha = "none")
 
