@@ -10,6 +10,7 @@ SmoothOutput <-
            AddPoints = F, TestDF = NULL, PointAlpha = 1, PointColour = "black",
            AddP = F, AddEstimate = F, LimitClip = T, TextColour = NA,
            ManualPY = NULL,
+           HoldRandom = NULL,
            XTransform = NULL, YTransform = NULL, XAdd = NULL, YAdd = NULL,
            SmoothFillAlpha = 0.1, SmoothColour = AlberColours[[1]],
            ReturnPlot = F,
