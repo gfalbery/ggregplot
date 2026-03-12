@@ -534,27 +534,13 @@ INLAModelAdd <- function(Response,
 
       if(!is.null(AddSVC)){
 
+        print("Adding SVC!")
+
         if(length(AddSVC) > 1){
           stop("AddSVC currently only supports one variable")
         }
 
         Var <- AddSVC
-
-        Coords <- as.matrix(Data[, Coordinates])
-
-        Mesh <- inla.mesh.2d(
-          loc = Coords,
-          boundary = inla.mesh.segment(loc = Boundary),
-          max.edge = c(0.5, 2),
-          cutoff = 0.05
-        )
-
-        Spde <- inla.spde2.pcmatern(
-          mesh = Mesh,
-          prior.range = c(1, 0.5),
-          prior.sigma = c(1, 0.01),
-          constr = TRUE
-        )
 
         # spatial intercept
         IdxSpace <- inla.spde.make.index(
@@ -570,12 +556,12 @@ INLAModelAdd <- function(Response,
 
         A.Space <- inla.spde.make.A(
           mesh = Mesh,
-          loc = Coords
+          loc = Points
         )
 
         A.Slope <- inla.spde.make.A(
           mesh = Mesh,
-          loc = Coords,
+          loc = Points,
           weights = Data[[Var]]
         )
 
@@ -600,8 +586,8 @@ INLAModelAdd <- function(Response,
             paste0(
               "Y ~ ",
               paste(Explanatory, collapse = " + "),
-              " + f(Space, model = Spde)",
-              " + f(Slope_", Var, ", model = Spde)"
+              " + f(Space, model = spde)",
+              " + f(Slope_", Var, ", model = spde)"
             )
           )
 
