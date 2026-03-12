@@ -30,7 +30,12 @@ Efxplot <- function(ModelList,
 
       ModelNames %<>% rev
 
+    }else{
+
+      ModelNames <- length(ModelList):1
+
     }
+
   }
 
   if(is.null(ModelNames) & !is.null(names(ModelList))){

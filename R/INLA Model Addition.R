@@ -585,7 +585,7 @@ INLAModelAdd <- function(Response,
           as.formula(
             paste0(
               "Y ~ ",
-              paste(Explanatory, collapse = " + "),
+              paste(c(Explanatory, KeptCovar), collapse = " + "),
               " + f(Space, model = spde)",
               " + f(Slope_", Var, ", model = spde)"
             )
