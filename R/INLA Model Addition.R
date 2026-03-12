@@ -15,6 +15,8 @@ INLAModelAdd <- function(Response,
 
                          AddSpatial = F, Coordinates = c("X", "Y"), Boundary = NULL,
 
+                         AddSVC = NULL,
+
                          Groups = F, GroupVar = NULL, GroupModel = "Rep",
 
                          ...){
@@ -527,6 +529,99 @@ INLAModelAdd <- function(Response,
       SpatialList <- list(Model = SpatialModel,
                           Mesh = Mesh,
                           SPDE = spde)
+
+      # Spatially varying coefficient model ####
+
+      if(!is.null(AddSVC)){
+
+        if(length(AddSVC) > 1){
+          stop("AddSVC currently only supports one variable")
+        }
+
+        Var <- AddSVC
+
+        Coords <- as.matrix(Data[, Coordinates])
+
+        Mesh <- inla.mesh.2d(
+          loc = Coords,
+          boundary = inla.mesh.segment(loc = Boundary),
+          max.edge = c(0.5, 2),
+          cutoff = 0.05
+        )
+
+        Spde <- inla.spde2.pcmatern(
+          mesh = Mesh,
+          prior.range = c(1, 0.5),
+          prior.sigma = c(1, 0.01),
+          constr = TRUE
+        )
+
+        # spatial intercept
+        IdxSpace <- inla.spde.make.index(
+          name = "Space",
+          n.spde = Mesh$n
+        )
+
+        # spatial slope
+        IdxSlope <- inla.spde.make.index(
+          name = paste0("Slope_", Var),
+          n.spde = Mesh$n
+        )
+
+        A.Space <- inla.spde.make.A(
+          mesh = Mesh,
+          loc = Coords
+        )
+
+        A.Slope <- inla.spde.make.A(
+          mesh = Mesh,
+          loc = Coords,
+          weights = Data[[Var]]
+        )
+
+        Stack <- inla.stack(
+          data = list(
+            Y = Data[[Response]]
+          ),
+          A = list(
+            1,
+            A.Space,
+            A.Slope
+          ),
+          effects = list(
+            Data[, c(Explanatory)],
+            Space = IdxSpace,
+            Slope = IdxSlope
+          )
+        )
+
+        FormulaSVC <-
+          as.formula(
+            paste0(
+              "Y ~ ",
+              paste(Explanatory, collapse = " + "),
+              " + f(Space, model = Spde)",
+              " + f(Slope_", Var, ", model = Spde)"
+            )
+          )
+
+        ModelSVC <- inla(
+          FormulaSVC,
+          family = Family,
+          data = inla.stack.data(Stack),
+          control.predictor = list(
+            A = inla.stack.A(Stack),
+            compute = TRUE
+          ),
+          control.compute = list(
+            dic = TRUE,
+            waic = TRUE
+          )
+        )
+
+        SpatialList$SVC <- ModelSVC
+
+      }
 
       # FullSpatialList <- SpatialList
 
