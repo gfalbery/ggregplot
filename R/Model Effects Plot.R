@@ -1,5 +1,3 @@
-# EfxPlotComp
-
 Efxplot <- function(ModelList,
                     Sig = TRUE, StarLoc = NULL,
                     Alpha1 = 1, Alpha2 = 1,
@@ -92,6 +90,21 @@ Efxplot <- function(ModelList,
         bind_rows() %>%
         bind_cols(Graph, .)
 
+    }
+
+    if(any(class(model) == "ergm")){
+
+      Summ = summary(model)
+      CoefTable = as.data.frame(Summ$coef)
+      CoefTable$Factor = rownames(CoefTable)
+
+      Graph = CoefTable %>%
+        dplyr::transmute(
+          Estimate = Estimate,
+          Lower = Estimate - 1.96 * `Std. Error`,
+          Upper = Estimate + 1.96 * `Std. Error`,
+          Factor = Factor
+        )
     }
 
     Graph$Model <- i
@@ -205,7 +218,3 @@ Efxplot <- function(ModelList,
     guides(alpha = "none")
 
 }
-
-
-
-
