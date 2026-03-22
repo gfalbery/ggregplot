@@ -537,7 +537,9 @@ INLAModelAdd <- function(Response,
         print("Adding SVC!")
 
         if(length(AddSVC) > 1){
+
           stop("AddSVC currently only supports one variable")
+
         }
 
         Var <- AddSVC

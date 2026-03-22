@@ -135,6 +135,9 @@ ggField <- function(Model, Mesh,
   }
 
   if(!is.null(Boundary)){
+
+    Boundary %<>% as.data.frame
+
     FieldPlot <- FieldPlot +
       geom_polygon(data = Boundary,
                    fill = NA,
