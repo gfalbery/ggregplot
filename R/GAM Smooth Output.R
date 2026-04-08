@@ -13,6 +13,7 @@ SmoothOutput <-
            HoldRandom = NULL,
            XTransform = NULL, YTransform = NULL, XAdd = NULL, YAdd = NULL,
            SmoothFillAlpha = 0.1, SmoothColour = AlberColours[[1]],
+           LineColour = "black",
            ReturnPlot = F,
            ...){
 
@@ -69,7 +70,7 @@ SmoothOutput <-
           FocalPlot +
           geom_ribbon(aes(ymin = Lower, ymax = Upper),
                       alpha = SmoothFillAlpha, colour = SmoothColour) +
-          geom_line() +
+          geom_line(colour = LineColour) +
           labs(x = OutputCovariates[i], y = Response)
 
         if(LimitClip){
@@ -232,8 +233,8 @@ SmoothOutput <-
 
         FocalPlot <-
           FocalPlot +
-          geom_line(alpha = LineAlpha, data = SlopeDF, aes(X, Y, group = Rep)) +
-          geom_line(data = FitLine, size = 1)  +
+          geom_line(alpha = LineAlpha, data = SlopeDF, colour = LineColour, aes(X, Y, group = Rep)) +
+          geom_line(data = FitLine, size = 1, colour = LineColour)  +
           labs(y = Response, x = OutputCovariates[i])
 
         if(AddP | AddEstimate){
