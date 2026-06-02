@@ -9,11 +9,13 @@ ggField <- function(Model, Mesh,
                     Points = NULL, PointAlpha = 1, PointSize = NULL,
                     PointColour = "black"){#, xlim, ylim){
 
-  require(ggplot2); require(INLA); require(tidyverse)
+  require(ggplot2); require(INLA); require(tidyverse); require(fmesher)
 
-  Projection <- inla.mesh.projector(Mesh,
-                                    dims = c(Res, Res))
+  Mesh <- fmesher::fm_as_fm(Mesh)
 
+  Projection <- fmesher::fm_evaluator(Mesh,
+
+                                      dims = c(Res, Res))
   Full.Projection <- expand.grid(x = Projection$x, y = Projection$y)
 
   Dim1 <- nrow(Full.Projection)
@@ -21,24 +23,28 @@ ggField <- function(Model, Mesh,
   WName <- Model$summary.hyperpar %>% rownames
 
   WName[str_detect(WName, "Range for")] %>%
+
     str_split(" ") %>% map_chr(last) ->
+
     WName
 
   if(Groups == 1){
 
-    Full.Projection$value <- c(inla.mesh.project(Projection, Model$summary.random$w$mean))
+    Full.Projection$value <- c(fmesher::fm_evaluate(Projection, Model$summary.random$w$mean))
 
   }else{
 
     Full.Projection[,paste0("Group",1:Groups)] <-
 
       apply(matrix(Model$summary.random[[WName]]$mean, ncol = Groups), 2,
-
-            function(x) c(inla.mesh.project(Projection, x)))
+            function(x) c(fmesher::fm_evaluate(Projection, x)))
 
     Full.Projection <-
+
       reshape2::melt(Full.Projection,
+
                      id.vars = c(names(Full.Projection)[-which(names(Full.Projection)%in%paste0("Group",
+
                                                                                                 1:Groups))]))
 
   }
@@ -54,13 +60,14 @@ ggField <- function(Model, Mesh,
   if(FitScale == "Binomial" & Round == "Before"){
 
     Full.Projection %<>%
+
       mutate_at("value", ~logistic(as.numeric(as.character(.x)) + GrandMean))
 
   }
-
   if(FitScale == "Gaussian" & Round == "Before"){
 
     Full.Projection %<>%
+
       mutate_at("value", ~(as.numeric(as.character(.x)))*GrandSD + GrandMean)
 
   }
@@ -68,9 +75,13 @@ ggField <- function(Model, Mesh,
   if(Fill == "Discrete"){
 
     Full.Projection$Fill <- cut(Full.Projection$value,
+
                                 breaks = quantile(Full.Projection$value, 0:9/9, na.rm = T),
+
                                 labels = c(round(quantile(Full.Projection$value, 0:9/9, na.rm = T), 2)[1:9]),
+
                                 include.lowest = T)
+
   } else{
 
     Full.Projection$Fill <- Full.Projection$value
@@ -78,8 +89,8 @@ ggField <- function(Model, Mesh,
   }
 
   if(FitScale == "Gaussian" & Round == "After"){
-
     Full.Projection %<>%
+
       mutate_at("Fill", ~(as.numeric(as.character(.x)))*GrandSD + GrandMean)
 
   }
@@ -87,11 +98,13 @@ ggField <- function(Model, Mesh,
   if(FitScale == "Binomial" & Round == "After"){
 
     Full.Projection %<>%
+
       mutate_at("value", ~logistic(as.numeric(as.character(.x)) + GrandMean))
 
     if(Fill == "Discrete"){
 
       Full.Projection %<>%
+
         mutate_at("Fill", ~factor(.x, levels = gtools::mixedsort(unique(.x))))
 
     }
@@ -103,9 +116,10 @@ ggField <- function(Model, Mesh,
   FieldPlot <- ggplot(Full.Projection,aes(x, y))
 
   if(!is.null(Boundary)){
-
     names(Boundary)[1] <- "x"
+
     names(Boundary)[2] <- "y"
+
     FieldPlot <- FieldPlot + geom_polygon(data = Boundary, fill = "white")
 
   }
@@ -113,16 +127,23 @@ ggField <- function(Model, Mesh,
   if(!FillAlpha){
 
     FieldPlot <- FieldPlot +
+
       # geom_tile(colour = "black") +
+
       geom_tile(colour = NA, aes(fill = Fill)) +
+
       coord_fixed() + labs(fill = "Mean") +
+
       labs(x = "Easting", y = "Northing")
 
   }else{
 
     FieldPlot <- FieldPlot +
+
       #geom_tile(colour = "black") +
+
       geom_tile(colour = NA, aes(fill = Fill), alpha = FillAlpha) +
+
       coord_fixed() + labs(fill = "Mean") +
       labs(x = "Easting", y = "Northing")
 
@@ -139,11 +160,17 @@ ggField <- function(Model, Mesh,
     Boundary %<>% as.data.frame
 
     FieldPlot <- FieldPlot +
+
       geom_polygon(data = Boundary,
+
                    fill = NA,
+
                    colour = "black", size = BoundaryWidth,
+
                    inherit.aes = F,
+
                    aes(x, y))
+
   }
 
   if(Groups>1){
@@ -153,10 +180,10 @@ ggField <- function(Model, Mesh,
       FacetLabels <- GroupLabels
 
     }else FacetLabels <- as.character(1:Groups)
-
     names(FacetLabels) <- as.character(1:Groups)
 
     FieldPlot <- FieldPlot + facet_wrap( ~ Group, labeller = as_labeller(FacetLabels)) +
+
       theme(strip.background = element_rect(fill = "white"))
 
   }
@@ -164,23 +191,28 @@ ggField <- function(Model, Mesh,
   if(!is.null(Points)){
 
     Points$X <- Points[,1]
+
     Points$Y <- Points[,2]
 
     if(Groups == 1){
 
       FieldPlot <- FieldPlot +
+
         geom_point(data = Points, inherit.aes = F, aes(X, Y), alpha = PointAlpha, colour = PointColour)
 
     }else{
 
       Points$Group <- Points[,GroupVar] %>% as.factor %>% as.numeric
-
       FieldPlot <- FieldPlot +
+
         geom_point(data = Points, inherit.aes = F,
+
                    aes(X, Y, group = Group),
+
                    alpha = PointAlpha, colour = PointColour, size = PointSize)
 
     }
+
   }
 
   return(FieldPlot)
