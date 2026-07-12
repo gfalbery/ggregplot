@@ -6,6 +6,7 @@ INLAModelAdd <- function(Response,
                          Method = "DIC",
                          Rounds = Inf, Delta = 2,
                          Clashes = NULL,
+                         Config = F,
                          ReturnData = T, AllModels = F, BaseModel = F,
                          Family = "gaussian", NTrials = 1,
 
@@ -72,7 +73,7 @@ INLAModelAdd <- function(Response,
   Base <- inla(f1,
                family = Family, Ntrials = NTrials,
                data = Data,
-               control.compute = list(dic = TRUE, config = TRUE))
+               control.compute = list(dic = TRUE, config = Config))
 
   ModelList <- AllModelList <- RemovedList <- FullFormulaList <- FormulaList <- list()
   DICList <- dDICList <- list()
@@ -108,7 +109,7 @@ INLAModelAdd <- function(Response,
         Model1 <- inla(f2,
                        family = Family, Ntrials = NTrials,
                        data = Data,
-                       control.compute = list(dic = TRUE, config = TRUE))
+                       control.compute = list(dic = TRUE, config = Config))
 
         ModelList[[Add[x]]] <- Model1
 
@@ -203,7 +204,7 @@ INLAModelAdd <- function(Response,
                 Model1 <- inla(f2,
                                family = Family, Ntrials = NTrials,
                                data = Data,
-                               control.compute = list(dic = TRUE, config = TRUE))
+                               control.compute = list(dic = TRUE, config = Config))
 
                 ModelList[[Add2[x]]] <- Model1
 
@@ -315,7 +316,7 @@ INLAModelAdd <- function(Response,
         Model1 <- inla(f2,
                        family = Family, Ntrials = NTrials,
                        data = Data,
-                       control.compute = list(dic = TRUE, config = TRUE))
+                       control.compute = list(dic = TRUE, config = Config))
 
         ModelList[[paste(Explanatory3, collapse = " + ")]] <- Model1
 
@@ -522,7 +523,7 @@ INLAModelAdd <- function(Response,
       SpatialModel <- inla(f1, # f2 + SPDE random effect
                            family = Family, Ntrials = NTrials,
                            data = inla.stack.data(SocialStack),
-                           control.compute = list(dic = TRUE, config = TRUE),
+                           control.compute = list(dic = TRUE, config = Config),
                            control.predictor = list(A = inla.stack.A(SocialStack))
       )
 
@@ -602,7 +603,7 @@ INLAModelAdd <- function(Response,
             compute = TRUE
           ),
           control.compute = list(
-            dic = TRUE, config = TRUE,
+            dic = TRUE, config = Config,
             waic = TRUE
           )
         )
@@ -709,7 +710,7 @@ INLAModelAdd <- function(Response,
         SpatiotemporalModel <- inla(fst, # Adding spatiotemporal effect
                                     family = Family, Ntrials = NTrials,
                                     data = inla.stack.data(SocialStack),
-                                    control.compute = list(dic = TRUE, config = TRUE),
+                                    control.compute = list(dic = TRUE, config = Config),
                                     control.predictor = list(A = inla.stack.A(SocialStack))
         )
 
